@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link href="libtest.css" rel="stylesheet" />
+  <script src="http://localhost/mirrorui/mirrorui.js"></script>
+  <title>lib test-copy</title>
+</head>
+<body>
+  <div>
+    <h1>媒体查询样式测试</h1>
+    <div class="abc">1024以上,100px字体大小</div>
+    <span class="abc1">1024以上,字为红色</span>
+    <div class="phone1">640以下,字为蓝色</div>
+    <span class="phone2">640以下,30px字体大小</span>
+    <h1>规则相同,类名不同,合并类名测试</h1>
+    <div class="same-val2">same-val2,same-val2含有相同的样式,(60px红字)</div>
+    <div class="same-val1"></div>
+    <h1>动态生成规则测试</h1>
+    <h3>margin和padding</h3>
+    <span class="inline-block pd-12 mg-22">pd-12 mg-22</span>
+    <h3>文字大小/颜色/文本对齐/加粗</h3>
+    <p class="txt-sm">txt-sm</p>
+    <p class="txt-md txt-red-5">txt-md  txt-red-5</p>
+    <p class="txt-base txt-center">txt-base txt-center</p>
+    <p class="txt-lg txt-right">txt-lg txt-right</p>
+    <p class="txt-xl txt-b-6">txt-xl txt-b-6加粗weight:600</p>
+    <p class="txt-2xl txt-pink-6">txt-2xl txt-pink-6</p>
+    <p class="txt-3xl">txt-3xl</p>
+    <p class="txt-40px">txt-40px自定义大小</p>
+    <p class="txt-4rem">txt-40px自定义大小REM</p>
+    <h3>背景色/边框</h3>
+    <span class="inline-block bg-blue-3">bg-blue-3</span>
+    <span class="inline-block bd-solid bd-3">bd-solid bd-3</span>
+    <span class="inline-block bd-solid bd-3 bd-rose-5">bd-solid bd-3 bd-rose-5</span>
+    <span class="inline-block bg-yellow-4 cir-tl-10">cir-tl-10左上圆角10px</span>
+    <span class="inline-block bg-sky-4 cir-br-10">cir-bl-10右下圆角10px</span>
+    <h3>宽度/高度</h3>
+    <span class="inline-block bg-blue-3 w-200">w-200 width:200px</span>
+    <span class="inline-block bg-red-3 h-100">h-100 height:100px</span>
+    <span class="inline-block bg-rose-4 w-20vw h-20vh">w-20vw,h-20vh width:20vw;height:20vh</span>
+    <span class="inline-block bg-rose-4 w-20p">w-20p width:20%</span>
+    <h3>块级元素左右居中</h3>
+    <div class="mg-auto w-200 bd-solid bd-rose-5 bg-blue-3">mg-auto</div>
+    <br />
+    <hr />
+    <br />
+    <br />
+  </div>
+</body>
+</html>

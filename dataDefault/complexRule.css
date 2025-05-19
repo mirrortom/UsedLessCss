@@ -1,0 +1,72 @@
+﻿.tabs-label,
+.input-file .form-label,
+.docmenu-item,
+.sidemenu-item,
+.sidemenu-label,
+.text-overflow {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.msgbox-shadow,
+.msgbox-modal {
+  position: fixed;
+  left: 0;
+}
+
+.msgbox-shadow,
+.msgbox-modal {
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0
+}
+
+@media only screen and (min-width: 1024px) {
+  .abc {
+    font-size: 100px;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  .abc1 {
+    color: red;
+  }
+}
+
+@media only screen and (max-width: 640px) {
+  .phone1 {
+    color: blue;
+  }
+
+  .phone2 {
+    font-size: 30px;
+  }
+}
+
+.btn,
+.btn-group,
+.btn-list-group:hover .btn-list-area,
+.switch,
+.sidemenu-arrleft,
+.sidemenu-arrdown {
+  display: inline-flex;
+}
+
+.btn,
+.sidemenu-arrleft,
+.sidemenu-arrdown {
+  background-color: red;
+}
+
+.same-val1 {
+  color: red;
+  font-size: 60px;
+}
+
+.same-val2 {
+  font-size: 60px;
+  color: red;
+}
