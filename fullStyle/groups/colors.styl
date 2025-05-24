@@ -1,0 +1,17 @@
+﻿// color
+for colorName,v in $colors-dict
+    for level,value in v
+        // 文字彩色
+        .txt-{colorName}-{level}
+            color:value
+        // 背景
+        .bg-{colorName}-{level}
+            background-color:value
+for colorName,v in $blackwhitegray-dict
+    for level,value in v
+        // 文字黑白灰
+        .txt-{colorName}-{level}
+            color:value
+        // 背景
+        .bg-{colorName}-{level}
+            background-color:value

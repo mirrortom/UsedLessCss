@@ -1,0 +1,206 @@
+﻿// 样式引用,相当于定义了样式变量.引用这个"变量",就引用了其下的规则.
+// 输出时,所有相同应用的类会写在一起,用逗号分割.
+// 引用语法: @extend $ext-text-overflow
+// 基本上每个扩展样式是一个css条目,这个借鉴了tailwindcss的原子化做法
+//=======
+// 文本
+//=======
+// 文本超出时,显示省略号.需要有宽度max-width 或者width
+$ext-text-overflow
+    max-width: 100%
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+$ext-color-white
+    color:$white['0']
+// @extend $ext-weight-700
+$ext-weight-700
+    font-weight:700
+// @extend $ext-weight-500
+$ext-weight-500
+    font-weight:500
+// @extend $ext-text-align-center
+$ext-text-align-center
+    text-align: center
+$ext-text-align-right
+    text-align: right
+$ext-text-align-left
+    text-align: left
+
+//==========
+// display
+//==========
+// @extend $ext-display-block
+$ext-display-block
+    display:block
+// @extend $ext-display-none
+$ext-display-none
+    display:none
+// @extend $ext-display-inline-block
+$ext-display-inline-block
+    display:inline-block
+
+// display flex / grid , inline-felx / inline-grid
+// @extend $ext-display-grid
+$ext-display-grid
+    display:grid
+$ext-display-inline-grid
+    display: inline-grid
+// @extend $ext-display-flex
+$ext-display-flex
+    display: flex
+$ext-display-inline-flex
+    display: inline-flex
+
+// justify: start|center|end
+$ext-justify-start
+    justify-content: start
+$ext-justify-center
+    justify-content: center
+$ext-justify-end
+    justify-content: end
+
+// justify: space
+$ext-justify-sb
+    justify-content: space-between
+$ext-justify-sa
+    justify-content: space-around
+$ext-justify-se
+    justify-content: space-evenly
+
+// justify-self: center|end ,for grid layout
+$ext-justify-self-start
+    justify-self: start
+$ext-justify-self-center
+    justify-self: center
+$ext-justify-self-end
+    justify-self: end
+
+// align-items: start|center|end
+$ext-align-start
+    align-items: start
+$ext-align-center
+    align-items: center
+$ext-align-end
+    align-items: end
+
+// align-self: center|end
+$ext-align-self-start
+    align-self: start
+$ext-align-self-center
+    align-self: center
+$ext-align-self-end
+    align-self: end
+
+// @extend $ext-inline-flex-vh-center
+$ext-inline-flex-vh-center
+    @extend $ext-display-inline-flex
+    @extend $ext-align-center
+    @extend $ext-justify-center
+$ext-flex-vh-center
+    @extend $ext-display-flex
+    @extend $ext-align-center
+    @extend $ext-justify-center
+$ext-valign-middle
+    vertical-align: middle
+
+//==========
+// position
+//==========
+// @extend $ext-position-relative
+$ext-position-relative
+    position:relative
+// @extend $ext-position-absolute
+$ext-position-absolute
+    position:absolute
+// @extend $ext-position-fixed
+$ext-position-fixed
+    position: fixed
+// 绝对定位4方向拉伸
+// @extend $ext-position-0
+$ext-position-0
+    left: 0
+    top: 0
+    right: 0
+    bottom: 0
+
+
+//==========
+// border
+//==========
+// @extend $ext-border-1px
+$ext-border-1px
+    border: 1px solid $border-color
+// @extend $ext-border-cir-default
+$ext-border-cir-default
+    border-radius: $cirAngle-dict['cir-3']
+// @extend $ext-border-circle
+$ext-border-circle
+    border-radius: 50%
+
+//==========
+// disabled
+//==========
+// 样式来自bt
+$ext-disabled
+    cursor: not-allowed
+    box-shadow: none
+    opacity: 0.65
+
+//=======
+// width
+//=======
+// @extend $ext-width-100
+$ext-width-100
+    width:100%
+
+//========
+// cursor
+//========
+// @extend $ext-cursor-pointer
+$ext-cursor-pointer
+    cursor: pointer
+
+//======
+// user
+//======
+// @extend $ext-user-select-none
+$ext-user-select-none
+    user-select: none
+
+//============
+// content伪类
+//============
+// @extend $ext-content-empty
+$ext-content-empty
+    content:''
+
+//============
+// overflow
+//============
+$ext-overflow-x-hidden
+    overflow-x:hidden
+$ext-overflow-x-auto
+    overflow-x:auto
+$ext-overflow-y-hidden
+    overflow-y:hidden
+$ext-overflow-y-auto
+    overflow-y:auto
+$ext-overflow-hidden
+    overflow:hidden
+$ext-overflow-auto
+    overflow:auto
+
+//============
+// color
+//============
+// @extend $ext-color-inherit
+$ext-color-inherit
+    color: inherit
+
+//================
+// underline-none
+//================
+// @extend $ext-text-decoration-none
+$ext-text-decoration-none
+    text-decoration: none

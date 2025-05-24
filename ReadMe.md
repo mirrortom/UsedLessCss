@@ -71,3 +71,5 @@ new UsedCss().Run("index.html", "output.css");
 
 ## 特点
 ##### 简化类名组成规则
+## 工具
+[AngleSharp](https://anglesharp.github.io/) 用于分析html和css

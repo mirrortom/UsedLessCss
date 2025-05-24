@@ -1,0 +1,23 @@
+﻿// display规则
+.none
+    @extend $ext-display-none
+.block
+    @extend $ext-display-block
+.inline-block
+    @extend $ext-display-inline-block
+.flex
+    @extend $ext-display-flex
+.inline-flex
+    @extend $ext-display-inline-flex
+.grid
+    @extend $ext-display-grid
+.inline-grid
+    @extend $ext-display-inline-grid
+
+// display:none block 针对不同屏幕隐藏或者显示
+for k,v in $mediaquery-screenDict
+    @media only screen and (min-width: v)
+        .{k}-none
+            display: none !important
+        .{k}-block
+            display: block !important

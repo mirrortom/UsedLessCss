@@ -1,0 +1,9 @@
+﻿[
+  {
+    "outputFile": "test/testAll.css",
+    "inputFile": "fullStyle/testAll.styl",
+    "minify": {
+      "enabled": false
+    }
+  }
+]

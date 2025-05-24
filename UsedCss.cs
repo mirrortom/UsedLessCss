@@ -7,31 +7,10 @@ using System.Linq;
 using System.Text;
 
 namespace UsedLessCss;
-/*
- *  目标功能: 动态生成css,输出按需使用到的css样式
- *  
- *  css生成有2种方式,第一种是从预定义的css文件里,根据.class|#id(不支持)|[prop](不支持)查找对应的css规则,
- *  第2种方式是根据约定的class名字动态生成css.例如类名 "mg-l-20",会生成 margin-left:20px这个规则
- *  第2种方法是第1种方法的补充,主要对于常用的margin|padding之类的,而且取值很广泛的那种情况.
- *  
- *  使用方式:new UsedCss().Run("index.html", "output.css");
- *  
- *  流程:
- *  1.载入规则集
- *  2.取出html中所有使用到的class
- *  3.遍历class,到所有规则集匹配,抽取css样式
- *  4.合并相同规则集的样式
- *  5.输出css文件
- *  
- *  其它细节看对应注释
- *  
- *  还要实现功能:
- *  1.css变量规则集
- *  2.功能集成到VS插件
- */
-
 internal class UsedCss
 {
+    #region 成员定义
+
     /// <summary>
     /// 简单css预定义规则集合,主要是工具样式,使用单个类选择器,规则数目主要是1条的,也有少量多条的 
     /// </summary>
@@ -67,34 +46,42 @@ internal class UsedCss
     /// </summary>
     private static Dictionary<string, Func<string, string>> rulesProc = new()
     {
-        // 通用规则 键名特别取值,不使用class类名.class名字不能数字开头,不能含有%,#等特殊符号
-        { "0" ,
-            (val) =>
+        // 用于grid布局的列数定义时
+        ["grid-cols"] = (val) =>
+        {
+            if ((int.TryParse(val, out int _)))
             {
-                if ((int.TryParse(val, out int _)))
-                {
-                    // 纯数值默认是像素单位
-                    return $"{val}px";
-                }
-                string[] unit = ["rem", "vw", "vh", "px"];
-                foreach (var item in unit)
-                {
-                    // 自带了css单位,并且数值有效,直接使用
-                    if (val.EndsWith(item, StringComparison.OrdinalIgnoreCase)
-                    && int.TryParse(val.Replace(item, ""), out int _val))
-                    {
-                        return val;
-                    }
-                }
-                // p结尾是百分比单位,单独处理
-                if (val.EndsWith("p", StringComparison.OrdinalIgnoreCase)
-                    && int.TryParse(val[..^1], out int _valp))
-                {
-                    return _valp + "%";
-                }
-                return string.Empty;
+                // 纯数值默认是像素单位
+                return val;
             }
-        }
+            return string.Empty;
+        },
+        // 通用规则 键名特别取值,不使用class类名.class名字不能数字开头,不能含有%,#等特殊符号
+        ["0"] = (val) =>
+           {
+               if ((int.TryParse(val, out int _)))
+               {
+                   // 纯数值默认是像素单位
+                   return $"{val}px";
+               }
+               string[] unit = ["rem", "vw", "vh", "px"];
+               foreach (var item in unit)
+               {
+                   // 自带了css单位,并且数值有效,直接使用
+                   if (val.EndsWith(item, StringComparison.OrdinalIgnoreCase)
+                   && int.TryParse(val.Replace(item, ""), out int _val))
+                   {
+                       return val;
+                   }
+               }
+               // p结尾是百分比单位,单独处理
+               if (val.EndsWith("p", StringComparison.OrdinalIgnoreCase)
+                   && int.TryParse(val[..^1], out int _valp))
+               {
+                   return _valp + "%";
+               }
+               return string.Empty;
+           }
     };
 
     /// <summary>
@@ -107,6 +94,11 @@ internal class UsedCss
     /// 匹配成功时的媒体查询css样式的缓存器,键是媒体查询名,值是里面的样式规则(同buffer)
     /// </summary>
     private Dictionary<string, Dictionary<string, HashSet<string>>> bufferMedia;
+
+#if DEBUG
+    private StringBuilder logBuf = new();
+#endif
+    #endregion
 
     /// <summary>
     /// 初始化对象时载入了数据,请调用Run方法完成任务.
@@ -125,11 +117,28 @@ internal class UsedCss
     }
 
     /// <summary>
-    /// input:html文件路径,output:css输出路径
+    /// input:html文件路径,output:css输出路径,globalCss:true添加一致性css样式
     /// </summary>
     /// <param name="input"></param>
     /// <param name="output"></param>
-    public void Run(string input, string output = "output.css")
+    public void Run(string input, string output = "output.css", bool globalCss = true)
+    {
+        var outCss = Run(input, globalCss);
+        File.WriteAllText(output, outCss);
+#if DEBUG
+        Console.WriteLine("CSS文件生成完成!");
+
+        Console.WriteLine();
+#endif
+    }
+
+    /// <summary>
+    /// input:html文件路径,globalCss:true加入一致性css样式.生成css文本返回.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="globalCss"></param>
+    /// <returns></returns>
+    public string Run(string input, bool globalCss = true)
     {
         // 1. 读取HTML文件
         var htmlContent = File.ReadAllText(input);
@@ -150,11 +159,16 @@ internal class UsedCss
         SameRulesCombine();
 
         // 5. 输出CSS文件
-        File.WriteAllText(output, ToCssTxt());
+        var outCss = ToCssTxt(globalCss);
 #if DEBUG
-        Console.WriteLine("CSS文件生成完成!");
+        Console.WriteLine("CSS输出结束.");
+        Console.WriteLine();
+        Console.WriteLine("Log Log Log");
+        Console.WriteLine(logBuf.ToString());
+        Console.WriteLine("END END Log");
         Console.WriteLine();
 #endif
+        return outCss;
     }
 
     #region 提取html的class
@@ -194,8 +208,9 @@ internal class UsedCss
         bufferMedia = [];
 #if DEBUG
         Console.WriteLine($"总共{classes.Count}个样式需要匹配");
+
         Console.WriteLine();
-        int count = 0;
+        int successCount = 0;
 #endif
         foreach (var clsName in classes.OrderBy(c => c))
         {
@@ -214,13 +229,16 @@ internal class UsedCss
             if (isok == false)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"匹配失败{count}！ {clsName}");
+                Console.WriteLine($"匹配失败！ {clsName}");
                 Console.ForegroundColor = ConsoleColor.White;
+                logBuf.AppendLine($"匹配失败！ {clsName}");
             }
+            else
+                successCount++;
             Console.WriteLine();
-            count++;
 #endif
         }
+        logBuf.AppendLine($"总计匹配{classes.Count}个样式.成功{successCount}个.");
     }
     #endregion
 
@@ -312,8 +330,8 @@ internal class UsedCss
                 if (arr.Contains('.' + clsName, StringComparison.OrdinalIgnoreCase))
                 {
                     AddBuffer(clsName, styleRule.Style.CssText, this.buffer);
+                    isMatched = true;
                 }
-                isMatched = true;
             }
             // 媒体查询样式
             else if (rule is AngleSharp.Css.Dom.ICssMediaRule mediaRule)
@@ -335,6 +353,7 @@ internal class UsedCss
                 if (mediaRulecount > 0)
                 {
                     AddMediaBuffer(mediaRule.ConditionText.Trim(), innerRuleBuf);
+                    isMatched = true;
                 }
             }
         }
@@ -498,13 +517,16 @@ internal class UsedCss
     /// </summary>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    private string ToCssTxt()
+    private string ToCssTxt(bool addBaseCss)
     {
         StringBuilder sb = new();
         // 加入全局css
-        sb.AppendLine(baseCss);
-        sb.AppendLine("/*===GLOBAL BASE END LINE===*/");
-        sb.AppendLine();
+        if (addBaseCss)
+        {
+            sb.AppendLine(baseCss);
+            sb.AppendLine("/*===GLOBAL BASE END LINE===*/");
+            sb.AppendLine();
+        }
         // 加入普通样式集
         foreach (var k in buffer.Keys)
         {

@@ -1,4 +1,5 @@
-﻿html {
+﻿/*global一致性css样式,其它项目引用这个文件*/
+html {
   font-size: 100%;
   line-height: 1.5;
   box-sizing: border-box;
@@ -7,11 +8,13 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 *,
 *::before,
 *::after {
   box-sizing: inherit;
 }
+
 body,
 h1,
 h2,
@@ -33,14 +36,17 @@ legend {
   margin: 0;
   padding: 0;
 }
+
 ol,
 ul {
   list-style: none;
 }
+
 table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+
 input,
 button,
 textarea,
@@ -49,49 +55,62 @@ select {
   font-size: 100%;
   -webkit-text-size-adjust: 100%;
 }
+
 :focus:not(:focus-visible) {
   outline: none;
 }
+
 :focus-visible {
   outline: 2px solid #4285f4;
   outline-offset: 2px;
 }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #333;
 }
+
 h1 {
   font-size: 2.5rem;
 }
+
 h2 {
   font-size: 2rem;
 }
+
 h3 {
   font-size: 1.75rem;
 }
+
 h4 {
   font-size: 1.5rem;
 }
+
 h5 {
   font-size: 1.25rem;
 }
+
 h6 {
   font-size: 1rem;
 }
+
 a {
   color: #06c;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s ease;
 }
-a:hover,
-a:focus {
-  color: #049;
-  text-decoration: underline;
-}
-a:visited {
-  color: #800080;
-}
-a:active {
-  color: #c00;
-}
+
+  a:visited {
+    color: #800080;
+  }
+
+  a:hover,
+  a:focus {
+    color: #049;
+    text-decoration: underline;
+  }
+
+  a:active {
+    color: #c00;
+  }

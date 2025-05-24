@@ -1,4 +1,5 @@
-﻿.tabs-label,
+﻿/*复杂规则是一个css文件,程序匹配使用到的样式,则出*/
+.tabs-label,
 .input-file .form-label,
 .docmenu-item,
 .sidemenu-item,
@@ -8,6 +9,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mg-auto {
+  margin-left: auto;
+  margin-right: auto
 }
 
 .msgbox-shadow,

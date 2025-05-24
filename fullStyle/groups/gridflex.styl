@@ -1,0 +1,58 @@
+﻿// flex布局和grid布局相关
+
+//===grid网格布局===//
+
+// 列/行数量选项 (最小单位1/16)
+for i in range(1, 16)
+    // 均分容器宽度
+    // minmax()是css函数,定义一个长宽范围的闭区间,于css网格布局一起使用
+    // fr是flex单位,指定轨道弹性布局系数值,每个长度都以其系数值比例均分剩余空间
+    .grid-cols-{i}
+        grid-template-columns: repeat(i, minmax(0, 1fr))
+// 先列后行排布
+.grid-flow-col
+    grid-auto-flow:column
+.grid-flow-row
+    grid-auto-flow:row
+// 行/列间距
+for size in range(1,100,1)
+    sizepx = size * 1px
+    .gap-{size}
+        gap:sizepx
+    .gap-row-{size}
+        row-gap:sizepx
+    .gap-col-{size}
+        column-gap:sizepx
+
+//===flex 线性布局===//
+
+// 竖直排布
+.flex-col
+    flex-direction: column
+.flex-row
+    flex-direction: row
+// 竖直排布媒体查询
+for k,v in $mediaquery-screenDict
+    @media only screen and (min-width: v)
+        .{k}-flex-col
+            flex-direction: column
+        .{k}-flex-row
+            flex-direction: row
+// 竖直排布,从下方开始
+.flex-col-r
+    flex-direction: column-reverse
+// 排布,从右/下端开始
+.flex-row-r
+    flex-direction: row-reverse
+// 可以换行/列
+.flex-wrap
+    flex-wrap: wrap
+// 元素分布占位
+.flex-110
+    flex:1 1 0%
+.flex-11auto
+    flex:1 1 auto
+.flex-01auto
+    flex:0 1 auto
+.flex-none
+    flex:none

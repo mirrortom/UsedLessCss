@@ -1,0 +1,28 @@
+﻿// 文本
+// 对齐
+.txt-center
+    @extend $ext-text-align-center
+.txt-left
+    @extend $ext-text-align-left
+.txt-right
+    @extend $ext-text-align-right
+// 大小
+for k, v in $fontSize-dict
+    .txt-{k}
+        font-size: v
+// 粗细
+for bold in range(100,900,100)
+    k=bold/100
+    .txt-b-{k}
+        font-weight:bold
+// 段落首行缩进2em
+.txt-in
+    text-indent: 2em
+// 下划线
+.txt-udline
+    text-decoration:underline
+.txt-udline-none
+    text-decoration:none
+// 超出时,显示省略号
+.txt-overflow
+    @extend $ext-text-overflow

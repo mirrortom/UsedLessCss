@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /.gitattributes
 /.gitignore
+/publish.json
+/testOutCss/index.css
+/testOutCss/testAll.css

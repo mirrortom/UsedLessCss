@@ -1,0 +1,51 @@
+﻿// 利用CSS边框法画一个三角形 参数$size:大小,$dir:顶角方向(上,右,下,左),,$color:颜色
+triangle($size = 24px, $dir = left, $color = var(--primary))
+    display: inline-block
+    width: 0
+    height: 0
+    border: $size solid transparent
+    if ($dir == top)
+        border-bottom-color: $color
+    else if ($dir == right)
+        border-left-color: $color
+    else if ($dir == bottom)
+        border-top-color: $color
+    else
+        border-right-color: $color
+
+// 边距和补白的便捷样式
+margin-padding(start,end,step)
+    for size in range(start,end,step)
+        sizepx = size * 1px
+        .mg-{size}
+            margin: sizepx
+        .mg-tb-{size}
+            margin-top: sizepx
+            margin-bottom: sizepx
+        .mg-t-{size}
+            margin-top: sizepx
+        .mg-b-{size}
+            margin-bottom: sizepx
+        .mg-lr-{size}
+            margin-left: sizepx
+            margin-right: sizepx
+        .mg-l-{size}
+            margin-left: sizepx
+        .mg-r-{size}
+            margin-right: sizepx
+        .pd-{size}
+            padding: sizepx
+        .pd-tb-{size}
+            padding-top: sizepx
+            padding-bottom: sizepx
+        .pd-t-{size}
+            padding-top: sizepx
+        .pd-b-{size}
+            padding-bottom: sizepx
+        .pd-lr-{size}
+            padding-left: sizepx
+            padding-right: sizepx
+        .pd-l-{size}
+            padding-left: sizepx
+        .pd-r-{size}
+            padding-right: sizepx
