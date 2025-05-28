@@ -1,4 +1,5 @@
 ﻿/*global一致性css样式,其它项目引用这个文件*/
+/*基准字体大小, 行高*/
 html {
   font-size: 100%;
   line-height: 1.5;
@@ -8,13 +9,13 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+/*所有元素盒模型*/
 *,
 *::before,
 *::after {
   box-sizing: inherit;
 }
-
+/*移除所有元素的默认边距*/
 body,
 h1,
 h2,
@@ -37,11 +38,13 @@ legend {
   padding: 0;
 }
 
+/*移除列表样式*/
 ol,
 ul {
   list-style: none;
 }
 
+/*移除默认表格间距*/
 table {
   border-collapse: collapse;
   border-spacing: 0;
@@ -52,10 +55,10 @@ button,
 textarea,
 select {
   font: inherit;
-  font-size: 100%;
-  -webkit-text-size-adjust: 100%;
+  font-size: 100%; /*纠正所有浏览器中奇怪的em字体大小*/
+  -webkit-text-size-adjust: 100%; /*防止iOS和Safari中的文本缩放*/
 }
-
+/* 焦点样式*/
 :focus:not(:focus-visible) {
   outline: none;
 }
@@ -65,11 +68,12 @@ select {
   outline-offset: 2px;
 }
 
+/*字体颜色*/
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #333;
 }
-
+/*大标题*/
 h1 {
   font-size: 2.5rem;
 }
@@ -95,22 +99,7 @@ h6 {
 }
 
 a {
-  color: #06c;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
+  color: inherit; /* 主链接颜色*/
+  text-decoration: inherit; /*控制下划线*/
+  cursor: pointer; /*鼠标手势*/
 }
-
-  a:visited {
-    color: #800080;
-  }
-
-  a:hover,
-  a:focus {
-    color: #049;
-    text-decoration: underline;
-  }
-
-  a:active {
-    color: #c00;
-  }

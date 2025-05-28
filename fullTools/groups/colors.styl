@@ -1,0 +1,17 @@
+﻿// color
+for colorName,v in $colors-dict
+    for level,value in v
+        // 文字彩色,带hover
+        .txt-{colorName}-{level},.hover-txt-{colorName}-{level}:hover
+            color:value
+        // 背景彩色,带hover
+        .bg-{colorName}-{level},.hover-bg-{colorName}-{level}:hover
+            background-color:value
+for colorName,v in $blackwhitegray-dict
+    for level,value in v
+        // 文字黑白灰,带hover
+        .txt-{colorName}-{level},.hover-txt-{colorName}-{level}:hover
+            color:value
+        // 背景黑白灰,带hover
+        .bg-{colorName}-{level},.hover-bg-{colorName}-{level}:hover
+            background-color:value

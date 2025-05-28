@@ -1,7 +1,7 @@
 ﻿[
   {
-    "outputFile": "test/testAll.css",
-    "inputFile": "fullStyle/testAll.styl",
+    "outputFile": "test/fullTools.css",
+    "inputFile": "fullTools/fullTools.styl",
     "minify": {
       "enabled": false
     }
