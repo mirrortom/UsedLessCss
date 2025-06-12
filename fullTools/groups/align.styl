@@ -1,6 +1,10 @@
 ﻿// 竖直居中对齐
 .v-middle
     @extend $ext-valign-middle 
+// 块级水平居中
+.mg-lr-auto
+    margin-left:auto
+    margin-right:auto
 
 // flex,grid布局时对齐和排布 用于容器
 .j-start
@@ -22,11 +26,11 @@
 .a-end
     @extend $ext-align-end
 // flex,grid布局时对齐 用于单个子元素
-.a-s-start
+.j-s-start
     @extend $ext-justify-self-start
-.a-s-center
+.j-s-center
     @extend $ext-justify-self-center
-.a-s-end
+.j-s-end
     @extend $ext-justify-self-end
 .a-s-start
     @extend $ext-align-self-start

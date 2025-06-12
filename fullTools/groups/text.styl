@@ -26,3 +26,14 @@ for bold in range(100,900,100)
 // 超出时,显示省略号
 .txt-overflow
     @extend $ext-text-overflow
+// 间距
+for size in range(1,10)
+    sizepx=size * 1px
+    sizeem=size * 1em
+    sizerem=size * 1rem
+    .spacing-{size}
+        letter-spacing:sizepx
+    .spacing-{size}em
+        letter-spacing:sizeem
+    .spacing-{size}rem
+        letter-spacing:sizerem

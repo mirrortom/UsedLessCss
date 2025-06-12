@@ -3,7 +3,10 @@ using AngleSharp.Css.Dom;
 using AngleSharp.Css.Parser;
 using AngleSharp.Html.Parser;
 using AngleSharp.Text;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace UsedLessCss;
@@ -15,11 +18,6 @@ internal class UsedCss
     /// 简单css预定义规则集合,主要是工具样式,使用单个类选择器,规则数目主要是1条的,也有少量多条的 
     /// </summary>
     private static Dictionary<string, string> simpleRules;
-
-    /// <summary>
-    /// 复合的css预定义规则集合,含有多种选择器,选择器和规则的个数大多数在1条以上
-    /// </summary>
-    private static ICssStyleSheet complexRules;
 
     /// <summary>
     /// 预定义的css规则名字,在动态生成规则时,约定的简化class名字和实际名字映射集合
@@ -34,54 +32,73 @@ internal class UsedCss
     private static Dictionary<string, string> styleValues;
 
     /// <summary>
-    /// 全局css样式 
-    /// </summary>
-    private static string baseCss;
-
-
-    /// <summary>
     /// 特定css规则处理集合,返回样式的值.键是简化类名,值是处理方法
     /// 0:一般性处理,返回像素px或者百分比%单位的值.
     /// 其它特别处理方法在此加入
     /// </summary>
-    private static Dictionary<string, Func<string, string>> rulesProc = new()
+    private static Dictionary<string, Func<string, string>> rulesProcMethod = new()
     {
-        // 用于grid布局的列数定义时
+        // 用于grid布局,平均分配列宽
         ["grid-cols"] = (val) =>
         {
             if ((int.TryParse(val, out int _)))
             {
-                // 纯数值默认是像素单位
                 return val;
             }
             return string.Empty;
         },
+        // 用于grid布局,百分比分配列宽 grid-[num]p[num]p
+        // 例如: "grid-10p"=>grid-template-columns:10% 90%
+        // "grid-10p30p60p"=>grid-template-columns:10% 30% 60%
+        ["grid"] = (val) =>
+        {
+            if (!val.EndsWith('p'))
+                return string.Empty;
+            string[] percents = val[..^1].Split('p');
+            int[] vals = new int[percents.Length];
+            for (int i = 0; i < vals.Length; i++)
+            {
+                if (!int.TryParse(percents[i], out vals[i]))
+                    return string.Empty;
+            }
+            // 如果值的和已经超过100,直接返回,否则加上最后列.
+            int max100 = 0;
+            StringBuilder reVal = new();
+            foreach (var item in vals)
+            {
+                max100 += item;
+                reVal.Append($"{item}% ");
+            }
+            if (max100 >= 100)
+                return reVal.ToString();
+            return reVal.Append($"{100 - max100}%").ToString();
+        },
         // 通用规则 键名特别取值,不使用class类名.class名字不能数字开头,不能含有%,#等特殊符号
         ["0"] = (val) =>
-           {
-               if ((int.TryParse(val, out int _)))
-               {
-                   // 纯数值默认是像素单位
-                   return $"{val}px";
-               }
-               string[] unit = ["rem", "vw", "vh", "px"];
-               foreach (var item in unit)
-               {
-                   // 自带了css单位,并且数值有效,直接使用
-                   if (val.EndsWith(item, StringComparison.OrdinalIgnoreCase)
-                   && int.TryParse(val.Replace(item, ""), out int _val))
-                   {
-                       return val;
-                   }
-               }
-               // p结尾是百分比单位,单独处理
-               if (val.EndsWith("p", StringComparison.OrdinalIgnoreCase)
-                   && int.TryParse(val[..^1], out int _valp))
-               {
-                   return _valp + "%";
-               }
-               return string.Empty;
-           }
+        {
+            if ((int.TryParse(val, out int _)))
+            {
+                // 纯数值默认是像素单位
+                return $"{val}px";
+            }
+            string[] unit = ["rem", "em", "vw", "vh", "px"];
+            foreach (var item in unit)
+            {
+                // 自带了css单位,并且数值有效,直接使用
+                if (val.EndsWith(item, StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(val.Replace(item, ""), out int _val))
+                {
+                    return val;
+                }
+            }
+            // p结尾是百分比单位,单独处理
+            if (val.EndsWith("p", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(val[..^1], out int _valp))
+            {
+                return _valp + "%";
+            }
+            return string.Empty;
+        }
     };
 
     /// <summary>
@@ -91,9 +108,29 @@ internal class UsedCss
     private Dictionary<string, HashSet<string>> buffer;
 
     /// <summary>
-    /// 匹配成功时的媒体查询css样式的缓存器,键是媒体查询名,值是里面的样式规则(同buffer)
+    /// 一次处理时,忽略样式名字列表
     /// </summary>
-    private Dictionary<string, Dictionary<string, HashSet<string>>> bufferMedia;
+    private HashSet<string> ignoreClassList;
+
+    /// <summary>
+    /// 一次处理时,明确要加入的样式名字列表
+    /// </summary>
+    private HashSet<string> explicitlyClassList;
+
+    /// <summary>
+    /// 一次处理时,存放提取的样式类名.注意实例化时用忽略大小写的参数
+    /// </summary>
+    private HashSet<string> classSet;
+
+    /// <summary>
+    /// 一次处理的html文件列表.这个成员和classFileIdMap,记录类名来自哪些文件,用于错误提示.
+    /// </summary>
+    private string[] inputFiles;
+
+    /// <summary>
+    /// 提取的样式类名字和来自提取的html文件的关系.例如btn=>[1,3],btn样式来自于文件1和3号.文件编号id是成员inputFiles的索引.字典的键和成员classSet相同.
+    /// </summary>
+    private Dictionary<string, HashSet<int>> classFileIdMap;
 
 #if DEBUG
     private StringBuilder logBuf = new();
@@ -107,135 +144,163 @@ internal class UsedCss
     {
         // 初始化规则集 使用静态成员,避免多次初始化
         simpleRules ??= RulesSimpleLoad("dataDefault/simpleRules.ini");
-        complexRules ??= RulesComplexLoad("dataDefault/complexRule.css");
         // 载入简化类名和实际类名字典
         styleNamesSimple ??= RulesSimpleLoad("dataDefault/styleSimpleName.ini");
         // 载入css预定义值
         styleValues ??= RulesSimpleLoad("dataDefault/styleValues.ini");
-        // 载入全局css
-        baseCss ??= BaseCssLoad("dataDefault/globalBase.css");
     }
 
     /// <summary>
-    /// input:html文件路径,output:css输出路径,globalCss:true添加一致性css样式
+    /// htmlContent:html文件内容
     /// </summary>
-    /// <param name="input"></param>
-    /// <param name="output"></param>
-    public void Run(string input, string output = "output.css", bool globalCss = true)
-    {
-        var outCss = Run(input, globalCss);
-        File.WriteAllText(output, outCss);
-#if DEBUG
-        Console.WriteLine("CSS文件生成完成!");
-
-        Console.WriteLine();
-#endif
-    }
-
-    /// <summary>
-    /// input:html文件路径,globalCss:true加入一致性css样式.生成css文本返回.
-    /// </summary>
-    /// <param name="input"></param>
-    /// <param name="globalCss"></param>
+    /// <param name="paths"></param>
     /// <returns></returns>
-    public string Run(string input, bool globalCss = true)
+    public string Run(params string[] paths)
     {
-        // 1. 读取HTML文件
-        var htmlContent = File.ReadAllText(input);
-
-        // 2. 使用AngleSharp解析HTML并提取class
-        var parser = new HtmlParser();
-        var document = parser.ParseDocument(htmlContent);
-
-        var classes = ExtractClasses(document);
+        // 1.遍历html文件
+        // 2.提取所有class名字
+        ScanClassFromHtmlFiles(paths);
 
         // 3. 生成CSS
 #if DEBUG
-        Console.WriteLine("CSS开始生成");
+        Console.WriteLine("---CSS开始生成---");
+        logBuf.AppendLine("---CSS开始生成---");
 #endif
-        GenerateCss(classes);
+        GenerateCss(classSet);
 
         // 4.合并相同样式
         SameRulesCombine();
 
         // 5. 输出CSS文件
-        var outCss = ToCssTxt(globalCss);
+        var outCss = ToCssTxt();
 #if DEBUG
         Console.WriteLine("CSS输出结束.");
         Console.WriteLine();
         Console.WriteLine("Log Log Log");
         Console.WriteLine(logBuf.ToString());
         Console.WriteLine("END END Log");
+        string logFilePath = $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.usedcss.log";
+        Console.WriteLine($"A log file was created on {AppDomain.CurrentDomain.BaseDirectory}{logFilePath}");
         Console.WriteLine();
+        // 文件log
+        File.WriteAllText(logFilePath, logBuf.ToString());
 #endif
         return outCss;
     }
 
     #region 提取html的class
 
-    /// <summary>
-    /// 提取所有元素的class属性
-    /// </summary>
-    /// <param name="document"></param>
-    /// <returns></returns>
-    HashSet<string> ExtractClasses(AngleSharp.Dom.IDocument document)
+    void ScanClassFromHtmlFiles(string[] paths)
     {
+        // 忽略列表,如果么有,为空集
+        this.ignoreClassList ??= [];
+        this.inputFiles = paths;
+        this.classFileIdMap = new(StringComparer.OrdinalIgnoreCase);
         // HashSet不会插入重复元素,避免提取相同的类名字
-        HashSet<string> classes = new(StringComparer.OrdinalIgnoreCase);
-
-        // 提取所有元素的class属性
-        foreach (var element in document.All)
+        classSet = new(StringComparer.OrdinalIgnoreCase);
+        //
+        for (int i = 0; i < inputFiles.Length; i++)
         {
-            if (element.ClassList.Length > 0)
+            string item = inputFiles[i];
+            // 1. 读取HTML文件
+            var htmlContent = File.ReadAllText(item);
+            // 2. 使用AngleSharp解析HTML并提取class
+            var parser = new HtmlParser();
+            var document = parser.ParseDocument(htmlContent);
+            ExtractClasses(document, i);
+        }
+        // 添加明确加入的样式
+        if (this.explicitlyClassList != null)
+        {
+            foreach (string item in this.explicitlyClassList)
             {
-                foreach (var className in element.ClassList)
-                {
-                    classes.Add(className.Trim());
-                }
+                classSet.Add(item);
             }
         }
-
-        return classes;
     }
 
     /// <summary>
-    /// 匹配抽取css
+    /// 提取所有元素的class属性.返回提取的个数(已排除忽略的)
+    /// </summary>
+    /// <param name="document"></param>
+    /// <returns></returns>
+    void ExtractClasses(AngleSharp.Dom.IDocument document, int fileIndex)
+    {
+        // 提取所有元素的class属性
+        foreach (var element in document.All)
+        {
+            if (element.ClassList.Length <= 0)
+                continue;
+            // 类选择器列表
+            foreach (var className in element.ClassList)
+            {
+                // 排除忽略样式
+                if (ignoreClassList.FirstOrDefault(o => o.Equals
+                (className, StringComparison.OrdinalIgnoreCase)) != null)
+                    continue;
+                // 提取到的类名
+                string clsN = className.Trim();
+                classSet.Add(clsN);
+                // 记录类名和文件对应关系
+                if (classFileIdMap.TryGetValue(clsN, out var classFileId))
+                {
+                    classFileId.Add(fileIndex);
+                }
+                else
+                {
+                    classFileIdMap[clsN] = [];
+                    classFileIdMap[clsN].Add(fileIndex);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 匹配样式,从各个源中抽取或者生成css
     /// </summary>
     /// <param name="classes"></param>
     void GenerateCss(HashSet<string> classes)
     {
-        buffer = [];
-        bufferMedia = [];
+        buffer = new(StringComparer.OrdinalIgnoreCase);
 #if DEBUG
         Console.WriteLine($"总共{classes.Count}个样式需要匹配");
 
         Console.WriteLine();
         int successCount = 0;
+        int codeIndex = 1;
 #endif
         foreach (var clsName in classes.OrderBy(c => c))
         {
 #if DEBUG
             Console.WriteLine($"开始匹配: {clsName}");
+            logBuf.Append($"编号[{codeIndex}] 样式[{clsName}] 结果--");
 #endif
             bool isok =
             // 简单预定义css匹配
             SimpleRuleMatch(clsName) ||
             // 简单动态值匹配
-            DynamicRuleValueMatch(clsName) ||
+            DynamicRuleValueMatch(clsName);
             // 复杂预定义css匹配
-            ComplexRuleMatch(clsName);
+            //ComplexRuleMatch(clsName);
 
 #if DEBUG
             if (isok == false)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"匹配失败！ {clsName}");
+                Console.WriteLine($"匹配失败:( {clsName}");
                 Console.ForegroundColor = ConsoleColor.White;
-                logBuf.AppendLine($"匹配失败！ {clsName}");
+                // 匹配失败时,日志记录对应文件
+                logBuf.Append($"匹配失败:( 受影响文件:");
+                foreach (var fIndex in classFileIdMap[clsName])
+                {
+                    logBuf.Append($"[{Path.GetFileName(inputFiles[fIndex])}], ");
+                }
+                logBuf.AppendLine($"-----ERROR");
             }
             else
                 successCount++;
             Console.WriteLine();
+            codeIndex++;
 #endif
         }
         logBuf.AppendLine($"总计匹配{classes.Count}个样式.成功{successCount}个.");
@@ -253,13 +318,13 @@ internal class UsedCss
     /// </summary>
     /// <param name="file"></param>
     /// <returns></returns>
-    private Dictionary<string, string> RulesSimpleLoad(string file)
+    private static Dictionary<string, string> RulesSimpleLoad(string file)
     {
         // from rule file 
         string rulesStr = File.ReadAllText(file);
         var ruleLines = rulesStr.Split(Environment.NewLine);
         // load rule in dict
-        Dictionary<string, string> rules = new();
+        Dictionary<string, string> rules = new(StringComparer.OrdinalIgnoreCase);
         foreach (var item in ruleLines)
         {
             if (string.IsNullOrWhiteSpace(item) || item.StartsWith("//"))
@@ -273,7 +338,12 @@ internal class UsedCss
             foreach (var k in keys)
             {
                 if (!string.IsNullOrWhiteSpace(k))
+                {
+                    // 键可能有重复的,因为配置条目在添加时可能用了相同的名字
+                    if (rules.TryGetValue(k.Trim(), out _))
+                        throw new Exception($"配置文件[{file}] 条目名字重复[{k}]!");
                     rules.Add(k.Trim(), rule[1].Trim());
+                }
             }
         }
         //
@@ -281,92 +351,28 @@ internal class UsedCss
     }
 
     /// <summary>
-    /// 复杂预定义css规则集载入
+    /// 忽略样式列表
     /// </summary>
-    /// <param name="file"></param>
-    /// <returns></returns>
-    private ICssStyleSheet RulesComplexLoad(string file)
+    /// <param name="clsNames"></param>
+    public void IgnoreClassLoad(params string[] clsNames)
     {
-        // 解析预定义复杂css文件
-        var parser = new CssParser();
-        // 缓存stylesheet
-        return parser.ParseStyleSheet(File.ReadAllText(file));
+        if (this.ignoreClassList != null) return;
+        this.ignoreClassList = [.. clsNames];
     }
 
     /// <summary>
-    /// 载入全局css
+    /// 明确加入样式列表
     /// </summary>
-    /// <param name="cssPath"></param>
-    string BaseCssLoad(string cssPath)
+    /// <param name="clsNames"></param>
+    public void ExplicitlyClassListLoad(params string[] clsNames)
     {
-        return File.ReadAllText(cssPath);
+        if (this.explicitlyClassList != null) return;
+        this.explicitlyClassList = [.. clsNames];
     }
     #endregion
 
 
     #region 匹配,从几种规则集中取出规则
-
-    /// <summary>
-    /// 复杂预定义css规则匹配.源文件是一个合格的css文件,包含各种类型的样式定义.
-    /// 比如常规的class/css变量/媒体查询/css动画等,每个定义下一般都含有多条css规则.
-    /// 建议css文件不要有重复定义.相同的CSS规则,写成一个css对象.
-    /// all: ture全员遍历,false找到第一个退出
-    /// </summary>
-    /// <param name="clsName"></param>
-    /// <returns></returns>
-    bool ComplexRuleMatch(string clsName, bool all = true)
-    {
-        bool isMatched = false;
-        int mediaRulecount = 0;
-        // 遍历样式源,查找指定类选择器.源中可能有重复的类,所以要全部遍历.
-        foreach (var rule in complexRules.Rules)
-        {
-            // 一般样式
-            if (rule is AngleSharp.Css.Dom.ICssStyleRule styleRule)
-            {
-                // 源样式类选择器(样式选择器可能是多个,是用,号分割的)
-                string[] arr = styleRule.SelectorText.Split(',');
-                // 如果源样式名含有目标样式名字,则提取这个样式里的规则.
-                if (arr.Contains('.' + clsName, StringComparison.OrdinalIgnoreCase))
-                {
-                    AddBuffer(clsName, styleRule.Style.CssText, this.buffer);
-                    isMatched = true;
-                }
-            }
-            // 媒体查询样式
-            else if (rule is AngleSharp.Css.Dom.ICssMediaRule mediaRule)
-            {
-                Dictionary<string, HashSet<string>> innerRuleBuf = new();
-                // 遍历里面的所有样式,比较(同一般样式的比较行为,加入到媒体样式缓存)
-                foreach (var innerRule in mediaRule.Rules.OfType<ICssStyleRule>())
-                {
-                    // 源样式类选择器(样式选择器可能是多个,是用,号分割的)
-                    string[] arr = innerRule.SelectorText.Split(',');
-                    // 如果源样式名含有目标样式名字,则提取这个样式里的规则.
-                    if (arr.Contains('.' + clsName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        AddBuffer(clsName, innerRule.Style.CssText, innerRuleBuf);
-                        mediaRulecount++;
-                    }
-                }
-                // 如果该媒体查询下面,没有一个样式匹配中,不需要加入该媒体查询
-                if (mediaRulecount > 0)
-                {
-                    AddMediaBuffer(mediaRule.ConditionText.Trim(), innerRuleBuf);
-                    isMatched = true;
-                }
-            }
-        }
-#if DEBUG
-        if (mediaRulecount > 0)
-            Console.WriteLine($"媒体查询预定义匹配 {clsName} 成功!包含样式个数{mediaRulecount}.");
-        else if (isMatched)
-            Console.WriteLine($"一般复杂预定义匹配 {clsName} 成功!");
-#endif
-        return isMatched;
-    }
-
-
 
     /// <summary>
     /// 简单预定义css规则匹配,成功时返回true,规则加入输出缓存
@@ -379,7 +385,8 @@ internal class UsedCss
         {
             AddBuffer(clsName, match, this.buffer);
 #if DEBUG
-            Console.WriteLine($"简单预定义匹配 {clsName} 成功!");
+            Console.WriteLine($"简单预定义匹配成功 {clsName}");
+            logBuf.AppendLine($"简单预定义匹配-成功^_^!");
 #endif
             return true;
         }
@@ -419,7 +426,7 @@ internal class UsedCss
         else
         {
             // 非预定义值时
-            if (rulesProc.TryGetValue(preName, out var method))
+            if (rulesProcMethod.TryGetValue(preName, out var method))
             {
                 // 特定的规则处理
                 targetVal = method(ruleValue);
@@ -427,7 +434,7 @@ internal class UsedCss
             else
             {
                 // 一般性规则处理
-                targetVal = rulesProc["0"](ruleValue);
+                targetVal = rulesProcMethod["0"](ruleValue);
             }
         }
         // 值不符合要求
@@ -438,7 +445,8 @@ internal class UsedCss
         string rules = match.Replace("$v", targetVal);
         AddBuffer(clsName, rules, this.buffer);
 #if DEBUG
-        Console.WriteLine($"简单动态匹配 {clsName} 成功!");
+        Console.WriteLine($"简单动态匹配成功 {clsName}");
+        logBuf.AppendLine($"简单动态匹配-成功^_^!");
 #endif
         return true;
     }
@@ -446,44 +454,6 @@ internal class UsedCss
 
 
     #region 匹配成功的规则加入缓存
-
-
-    /// <summary>
-    /// 将一个媒体查询加入到缓存
-    /// </summary>
-    /// <param name="mediaName"></param>
-    /// <param name="newInnerRules"></param>
-    private void AddMediaBuffer(string mediaName, Dictionary<string, HashSet<string>> newInnerRules)
-    {
-        if (this.bufferMedia.TryGetValue(mediaName, out var _))
-        {
-            // 如果存在该媒体样式(一般不会将同样的媒体查询写多次,这种情况极少发生)
-            // 将该媒体下的规则和新找到的规则合并.
-            // 这需要操作2个字典合并.类型是:Dictionary<string, HashSet<string>>
-            // 手动合并
-            // 1. 遍历新找到的样式字典
-            foreach (var newClassName in newInnerRules.Keys)
-            {
-                // 2. 如果媒体缓存中已经存在这个样式了,合并字典的值(HashSet<string>)
-                if (this.bufferMedia[mediaName].TryGetValue(newClassName, out var _))
-                {
-                    // UnionWith()例如a.UnionWith(b),会修改a,a合并后有a和b所有元素
-                    this.bufferMedia[mediaName][newClassName]
-                    .UnionWith(newInnerRules[newClassName]);
-                }
-                else
-                {
-                    // 3. 加入新值
-                    this.bufferMedia[mediaName].Add(newClassName, newInnerRules[newClassName]);
-                }
-            }
-        }
-        else
-        {
-            this.bufferMedia[mediaName] = newInnerRules;
-        }
-    }
-
 
     /// <summary>
     /// 将一个css样式加入到缓存
@@ -502,7 +472,7 @@ internal class UsedCss
         var items = val.Split(';');
         foreach (var c in items)
         {
-            // 拆解规则键值对,去掉空客,同意格式.避免相同规则重复加入.
+            // 拆解规则键值对,去掉空客,统一格式.避免相同规则重复加入.
             // 例如"left:0"和"left: 0"或" left:0"
             var r = c.Split(":");
             buf[name].Add($"{r[0].Trim()}:{r[1].Trim()}");
@@ -517,34 +487,17 @@ internal class UsedCss
     /// </summary>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    private string ToCssTxt(bool addBaseCss)
+    private string ToCssTxt()
     {
         StringBuilder sb = new();
-        // 加入全局css
-        if (addBaseCss)
-        {
-            sb.AppendLine(baseCss);
-            sb.AppendLine("/*===GLOBAL BASE END LINE===*/");
-            sb.AppendLine();
-        }
+        sb.AppendLine("/*-----usedCss--split--line-----*/");
         // 加入普通样式集
         foreach (var k in buffer.Keys)
         {
             FomartToTxtBuf(sb, k, buffer[k]);
         }
-        // 加入媒体样式集
-        foreach (var mk in bufferMedia.Keys)
-        {
-            sb.AppendLine($"@media {mk} {{");
-            foreach (var k in bufferMedia[mk].Keys)
-            {
-                // 媒体查询下的样式需要缩进
-                FomartToTxtBuf(sb, k, bufferMedia[mk][k], 4);
-            }
-            sb.AppendLine("}");
-        }
 #if DEBUG
-        sb.AppendLine($"/*===生成时间Create time: {DateTime.Now.ToString()} ===*/");
+        sb.AppendLine($"/*-----usedCss-----Create time: {DateTime.Now.ToString()}-----*/");
 #endif
         return sb.ToString().TrimEnd();
     }
@@ -599,20 +552,6 @@ internal class UsedCss
                 RemoveDupAndAddNew(dupKeys, this.buffer);
             }
         }
-        // 媒体样式集
-        foreach (var mk in this.bufferMedia.Keys)
-        {
-            // 遍历每一个媒体查询样式下的所有样式,如果值有相同的,合并.逻辑处理和普通样式相同.
-            var dupGroupListInner = FindSameValueItems(this.bufferMedia[mk]);
-            if (dupGroupListInner.Count > 0)
-            {
-                // 遍历重复键集合
-                foreach (var dupKeys in dupGroupListInner)
-                {
-                    RemoveDupAndAddNew(dupKeys, this.bufferMedia[mk]);
-                }
-            }
-        }
 
         // dupKeys:在src中具有相同值的键的列表.src:源字典
         // 该方法将src中所有相同值的元素为合并为一个,值不变,键是相同值的键的,以逗号合并的字符串
@@ -655,6 +594,18 @@ internal class UsedCss
                 duplicates.Add(d.Value);
         }
         return duplicates;
+    }
+    #endregion
+
+    #region Unit Test
+    /// <summary>
+    /// 返回一个规则值的处理方法,测试规则值是否生成正确
+    /// </summary>
+    /// <param name="clsName"></param>
+    /// <returns></returns>
+    public static Func<string, string> UT_GetRulesProcMethod(string clsName)
+    {
+        return rulesProcMethod[clsName];
     }
     #endregion
 }

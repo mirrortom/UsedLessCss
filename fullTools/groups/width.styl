@@ -2,3 +2,45 @@
 .w-autosize
     max-width: 100%
     height: auto
+for size in range(1,1000,1)
+    sizepx = size * 1px
+    .w-{size}
+        width:sizepx
+    .h-{size}
+        height:sizepx
+    .max-w-{size}
+        max-width:sizepx
+    .max-h-{size}
+        max-height:sizepx
+    .min-w-{size}
+        max-width:sizepx
+    .min-h-{size}
+        max-height:sizepx
+
+for size in range(1,20,1)
+    sizeem=size * 1em
+    .w-{size}em
+        width:sizeem
+    .h-{size}em
+        height:sizeem
+
+for size in range(1,100,1)
+    sizeVw=size * 1vw
+    sizeVh=size * 1vh
+    sizeP=size+'%'
+    .w-{size}vw
+        width:sizeVw
+    .max-w-{size}vw
+        width:sizeVw
+    .w-{size}p
+        width:sizeP
+    .max-w-{size}p
+        max-width:sizeP
+    .h-{size}vh
+        height:sizeVh
+    .max-h-{size}vh
+        max-height:sizeVh
+    .h-{size}p
+        height:sizeP
+    .max-h-{size}p
+        max-height:sizeP

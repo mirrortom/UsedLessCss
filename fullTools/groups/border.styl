@@ -1,6 +1,39 @@
 ﻿// 边框
+
+// 取消边框(使用width0比较好,不要用none)这个样式放在前面,否则会覆盖
+.bd-none
+    border-width:0
+.bd-t-none
+    border-top-width:0
+.bd-b-none
+    border-bottom-width:0
+.bd-l-none
+    border-left-width:0
+.bd-r-none
+    border-right-width:0
+.bd-tb-none
+    border-top-width:0
+    border-bottom-width:0
+.bd-lr-none
+    border-left-width:0
+    border-right-width:0
+// 
+for size in range(1,10,1)
+    sizeem = size * 1em
+    // 圆角-em单位
+    .cir-{size}em
+        border-radius:sizeem
+    .cir-tl-{size}em
+        border-top-left-radius:sizeem
+    .cir-tr-{size}em
+        border-top-right-radius:sizeem
+    .cir-bl-{size}em
+        border-bottom-left-radius:sizeem
+    .cir-br-{size}em
+        border-bottom-right-radius:sizeem
 for size in range(1,100,1)
     sizepx = size * 1px
+    // 圆角-像素单位
     .cir-{size}
         border-radius:sizepx
     .cir-tl-{size}
@@ -11,3 +44,97 @@ for size in range(1,100,1)
         border-bottom-left-radius:sizepx
     .cir-br-{size}
         border-bottom-right-radius:sizepx
+    // 圆角-百分比单位
+    sizeP=size+'%'
+    .cir-{size}p
+        border-radius:sizeP
+    .cir-tl-{size}p
+        border-top-left-radius:sizeP
+    .cir-tr-{size}p
+        border-top-right-radius:sizeP
+    .cir-bl-{size}p
+        border-bottom-left-radius:sizeP
+    .cir-br-{size}p
+        border-bottom-right-radius:sizeP
+    // 实线边框厚度
+    .bd-{size}
+        border-width:sizepx
+        border-style:solid
+    .bd-t-{size}
+        border-top-width:sizepx
+        border-top-style:solid
+    .bd-b-{size}
+        border-bottom-width:sizepx
+        border-bottom-style:solid
+    .bd-l-{size}
+        border-left-width:sizepx
+        border-left-style:solid
+    .bd-r-{size}
+        border-right-width:sizepx
+        border-right-style:solid
+    .bd-lr-{size}
+        border-left-width:sizepx
+        border-right-width:sizepx
+        border-left-style:solid
+        border-right-style:solid
+    .bd-tb-{size}
+        border-top-width:sizepx
+        border-bottom-width:sizepx
+        border-top-style:solid
+        border-bottom-style:solid
+
+// 边框样式 style 放到后面,可以覆盖前面设置的边框样式
+.bd-solid
+    border-style:solid
+.bd-dashed
+    border-style:dashed
+.bd-dotted
+    border-style:dotted
+// top style
+.bd-t-solid
+    border-top-style:solid
+.bd-t-dashed
+    border-top-style:dashed
+.bd-t-dotted
+    border-top-style:dotted
+// bottom style
+.bd-b-solid
+    border-bottom-style:solid
+.bd-b-dashed
+    border-bottom-style:dashed
+.bd-b-dotted
+    border-bottom-style:dotted
+// left style
+.bd-l-solid
+    border-left-style:solid
+.bd-l-dashed
+    border-left-style:dashed
+.bd-l-dotted
+    border-left-style:dotted
+// right style
+.bd-r-solid
+    border-right-style:solid
+.bd-r-dashed
+    border-right-style:dashed
+.bd-r-dotted
+    border-right-style:dotted
+// top bottom
+.bd-tb-solid
+    border-top-style:solid
+    border-bottom-style:solid
+.bd-tb-dashed
+    border-top-style:dashed
+    border-bottom-style:dashed
+.bd-tb-dotted
+    border-top-style:dotted
+    border-bottom-style:dotted
+// left right
+.bd-lr-solid
+    border-left-style:solid
+    border-right-style:solid
+.bd-lr-dashed
+    border-left-style:dashed
+    border-right-style:dashed
+.bd-lr-dotted
+    border-left-style:dotted
+    border-right-style:dotted

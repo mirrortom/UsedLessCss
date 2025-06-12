@@ -1,5 +1,7 @@
+/*-----usedCss--split--line-----*/
 .bd-3 {
   border-width: 3px;
+  border-style: solid;
 }
 
 .bd-rose-5 {
@@ -14,8 +16,20 @@
   background-color: #93c5fd;
 }
 
+.bg-gray-4 {
+  background-color: #9ca3af;
+}
+
+.bg-lime-3 {
+  background-color: #bef264;
+}
+
 .bg-orange-4 {
   background-color: #fb923c;
+}
+
+.bg-pink-2 {
+  background-color: #fbcfe8;
 }
 
 .bg-pink-4 {
@@ -42,6 +56,10 @@
   background-color: #38bdf8;
 }
 
+.bg-teal-4 {
+  background-color: #2dd4bf;
+}
+
 .bg-yellow-4 {
   background-color: #facc15;
 }
@@ -52,6 +70,14 @@
 
 .cir-tl-10 {
   border-top-left-radius: 10px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
 }
 
 .gap-20 {
@@ -86,18 +112,21 @@
   margin: 22px;
 }
 
-.mg-auto {
+.mg-5 {
+  margin: 5px;
+}
+
+.mg-b-5 {
+  margin-bottom: 5px;
+}
+
+.mg-lr-auto {
   margin-left: auto;
   margin-right: auto;
 }
 
 .pd-12 {
   padding: 12px;
-}
-
-.same-val1,.same-val2 {
-  color: rgba(255, 0, 0, 1);
-  font-size: 60px;
 }
 
 .txt-2xl {
@@ -117,7 +146,7 @@
 }
 
 .txt-b-6 {
-  font-weight: 600;
+  font-weight: 6px;
 }
 
 .txt-base {
@@ -168,24 +197,4 @@
   width: 20vw;
 }
 
-@media only screen and (min-width: 1024px) {
-  .abc {
-    font-size: 100px;
-  }
-
-  .abc1 {
-    color: rgba(255, 0, 0, 1);
-  }
-
-}
-@media only screen and (max-width: 640px) {
-  .phone1 {
-    color: rgba(0, 0, 255, 1);
-  }
-
-  .phone2 {
-    font-size: 30px;
-  }
-
-}
-/*===生成时间Create time: 2025/5/24 23:20:45 ===*/
+/*-----usedCss-----Create time: 2025/6/12 21:56:52-----*/

@@ -2,17 +2,30 @@
 
 //===grid网格布局===//
 
-// 列/行数量选项 (最小单位1/16)
-for i in range(1, 16)
+// 2~16列,平均分布列,列数量选项 (最小单位1/16)
+for i in range(2, 16)
     // 均分容器宽度
     // minmax()是css函数,定义一个长宽范围的闭区间,于css网格布局一起使用
     // fr是flex单位,指定轨道弹性布局系数值,每个长度都以其系数值比例均分剩余空间
     .grid-cols-{i}
         grid-template-columns: repeat(i, minmax(0, 1fr))
+// col span / row span
+for i in range(2, 16)
+    .col-span-{i}
+        grid-column:span i / span i
+    .row-span-{i}
+        grid-row:span i / span i
+// 2列,按百分比分布
+for i in range(1, 100)
+    col1p=i+'%'
+    col2p=(100 - i)+'%'
+    .grid-{i}p
+        grid-template-columns: col1p col2p
+
 // 先列后行排布
-.grid-flow-col
+.grid-col
     grid-auto-flow:column
-.grid-flow-row
+.grid-row
     grid-auto-flow:row
 // 行/列间距
 for size in range(1,100,1)
@@ -24,7 +37,7 @@ for size in range(1,100,1)
     .gap-col-{size}
         column-gap:sizepx
 
-//===flex 线性布局===//
+//===flex 布局===//
 
 // 竖直排布
 .flex-col
