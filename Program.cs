@@ -4,7 +4,8 @@ using UsedLessCss;
 // 基本测试
 //Test();
 //TestFileWatch();
-ForMirrorUiDoc();
+//ForMirrorUiDoc(); 
+ForMirrorIconDoc();
 //var m=UsedCss.UT_GetRulesProcMethod("0");
 //Console.WriteLine(m("13"));
 
@@ -52,8 +53,8 @@ static void TestFileWatch()
 static void ForMirrorUiDoc()
 {
     // 1.静态样式文件选取
-    string globle = StylesGlobal.GetCss();
-    string uiAll = StylesMirrorUI.GetCss(Uicoms.all);
+    byte[] globle = StylesGlobal.GetBytesCss();
+    byte[] uiAll = StylesMirrorUI.GetBytesCss(Uicoms.all);
     // 2.html文件
     string[] filePaths = Directory.GetFiles("D:\\Mirror\\Project_git\\webcoms\\mirrorui\\doc\\");
     List<string> files = new();
@@ -69,5 +70,30 @@ static void ForMirrorUiDoc()
     string css = uc.Run([.. files]);
     // 5.合并多个样式文件
     string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\uidoc.css";
-    Helps.UnionFiles(outPath, globle, uiAll, css);
+    Helps.UnionFiles(outPath, globle, uiAll, Encoding.UTF8.GetBytes(css));
+}
+
+// 为webicon文档生成样式
+static void ForMirrorIconDoc()
+{
+    // 1.静态样式文件选取
+    byte[] globle = StylesGlobal.GetBytesCss();
+    byte[] mirrorui = StylesMirrorUI.GetBytesCss(Uicoms.btn, Uicoms.cachepage);
+    byte[] iconcss = StylesMirrorIcon.GetBytesCss();
+    // 2.html文件
+    string[] filePaths = Directory.GetFiles("D:\\Mirror\\Project_git\\webicons\\mirroricon\\doc\\");
+    List<string> files = new();
+    files.Add("D:\\Mirror\\Project_git\\webicons\\mirroricon\\index.html");
+    files.AddRange(filePaths);
+    // 3.忽略类/明确添加类 列表
+    string ignoreClass = File.ReadAllText("usedCssCfg/mirrorIcon_ignoreClass.txt");
+    //string explicitlyClass = File.ReadAllText("usedCssCfg/mirrorui_explicitlyClass.txt");
+    // 4.生成
+    var uc = new UsedCss();
+    uc.IgnoreClassLoad(ignoreClass.Split(Environment.NewLine));
+    //uc.ExplicitlyClassListLoad(explicitlyClass.Split(Environment.NewLine));
+    string css = uc.Run([.. files]);
+    // 5.合并多个样式文件
+    string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\icondoc.css";
+    Helps.UnionFiles(outPath, globle, mirrorui, iconcss, Encoding.UTF8.GetBytes(css));
 }

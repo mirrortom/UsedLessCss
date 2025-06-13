@@ -201,12 +201,12 @@ internal class UsedCss
         //
         for (int i = 0; i < inputFiles.Length; i++)
         {
-            string item = inputFiles[i];
+            string itemPath = inputFiles[i];
             // 1. 读取HTML文件
-            var htmlContent = File.ReadAllText(item);
+            FileStream fStream = File.OpenRead(itemPath);
             // 2. 使用AngleSharp解析HTML并提取class
             var parser = new HtmlParser();
-            var document = parser.ParseDocument(htmlContent);
+            var document = parser.ParseDocument(fStream);
             ExtractClasses(document, i);
         }
         // 添加明确加入的样式
@@ -303,8 +303,11 @@ internal class UsedCss
             codeIndex++;
 #endif
         }
+#if DEBUG
         logBuf.AppendLine($"总计匹配{classes.Count}个样式.成功{successCount}个.");
+#endif
     }
+
     #endregion
 
 
@@ -321,8 +324,7 @@ internal class UsedCss
     private static Dictionary<string, string> RulesSimpleLoad(string file)
     {
         // from rule file 
-        string rulesStr = File.ReadAllText(file);
-        var ruleLines = rulesStr.Split(Environment.NewLine);
+        var ruleLines = File.ReadAllLines(file);
         // load rule in dict
         Dictionary<string, string> rules = new(StringComparer.OrdinalIgnoreCase);
         foreach (var item in ruleLines)

@@ -43,14 +43,34 @@ internal class StylesMirrorUI
     private static string rootDir = "D:\\Mirror\\Project_git\\webcoms\\mirrorui\\stylusOutCss\\";
 
     /// <summary>
-    /// 获取组件样式
+    /// 获取组件样式--文本结果
     /// </summary>
-    /// <param name="uiName"></param>
+    /// <param name="uiNames"></param>
     /// <returns></returns>
-    public static string GetCss(Uicoms uiName)
+    public static string GetCss(params Uicoms[] uiNames)
     {
-        string path = Path.Combine(rootDir, uiName.ToString()) + ".css ";
-        return File.ReadAllText(path);
+        StringBuilder buf = new();
+        foreach (var item in uiNames)
+        {
+            string path = Path.Combine(rootDir, item.ToString()) + ".css ";
+            buf.AppendLine(File.ReadAllText(path));
+        }
+        return buf.ToString();
     }
 
+    /// <summary>
+    /// 获取组件样式--字节结果
+    /// </summary>
+    /// <param name="uiNames"></param>
+    /// <returns></returns>
+    public static byte[] GetBytesCss(params Uicoms[] uiNames)
+    {
+        byte[] buf = [];
+        foreach (var item in uiNames)
+        {
+            string path = Path.Combine(rootDir, item.ToString()) + ".css ";
+            buf = [.. buf, .. File.ReadAllBytes(path)];
+        }
+        return buf;
+    }
 }
