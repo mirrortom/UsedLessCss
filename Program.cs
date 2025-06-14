@@ -2,12 +2,13 @@
 using System.Text;
 using UsedLessCss;
 // 基本测试
-//Test();
+Test();
 //TestFileWatch();
 //ForMirrorUiDoc(); 
-ForMirrorIconDoc();
+//ForMirrorIconDoc();
+//ForBlogArticle();
+
 //var m=UsedCss.UT_GetRulesProcMethod("0");
-//Console.WriteLine(m("13"));
 
 static void Test()
 {
@@ -96,4 +97,30 @@ static void ForMirrorIconDoc()
     // 5.合并多个样式文件
     string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\icondoc.css";
     Helps.UnionFiles(outPath, globle, mirrorui, iconcss, Encoding.UTF8.GetBytes(css));
+}
+
+// 为博客文章生成样式
+static void ForBlogArticle()
+{
+    // 1.静态样式文件选取
+    byte[] globle = StylesGlobal.GetBytesCss();
+    byte[] mirrorui = StylesMirrorUI.GetBytesCss(Uicoms.allNoTheme);
+    byte[] iconcss = StylesMirrorIcon.GetBytesCss();
+    byte[] blogcss = File.ReadAllBytes("D:\\Mirror\\Project_git\\MirrorBlog\\src\\asset\\css\\blog.css");
+    // 2.html文件
+    //string[] filePaths = Directory.GetFiles("D:\\Mirror\\Project_git\\webicons\\mirroricon\\doc\\");
+    List<string> files = new();
+    files.Add("D:\\Mirror\\Project_git\\MirrorBlog\\src\\doc\\jsapi.html");
+    //files.AddRange(filePaths);
+    // 3.忽略类/明确添加类 列表
+    //string ignoreClass = File.ReadAllText("usedCssCfg/mirrorIcon_ignoreClass.txt");
+    string explicitlyClass = File.ReadAllText("usedCssCfg/blogArticle_explicitlyClass.txt");
+    // 4.生成
+    var uc = new UsedCss();
+    //uc.IgnoreClassLoad(ignoreClass.Split(Environment.NewLine));
+    uc.ExplicitlyClassListLoad(explicitlyClass.Split(Environment.NewLine));
+    string css = uc.Run([.. files]);
+    // 5.合并多个样式文件
+    string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\blogArticle.css";
+    Helps.UnionFiles(outPath, globle, mirrorui, iconcss, blogcss, Encoding.UTF8.GetBytes(css));
 }

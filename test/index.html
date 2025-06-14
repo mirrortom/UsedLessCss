@@ -11,68 +11,79 @@
   <div>
     <h1>margin padding</h1>
     <div class="bg-gray-4">
-      <button class="mg-5 bg-red-3">mg-5</button>
+      <!--<button class="mg-5 bg-red-3">mg-5 </button>
       <button class="mg-5 bg-lime-3">mg-5</button>
-      <button class="mg-5 bg-teal-4">mg-5</button>
+      <button class="mg-5 bg-teal-4">mg-5</button>-->
+      <button class="mg-5 txt-2xl bg-yellow-4 sm-bg-teal-5 md-txt-red-5 lg-bg-red-6 xl-bg-pink-5">sm-bg-teal-5 md-txt-red-5 lg-bg-red-6 xl-bg-pink-5</button>
     </div>
-    <div class="bg-pink-2 flex flex-col">
+    <!--<div class="bg-pink-2 flex flex-col">
       <button class="mg-b-5 bg-red-3">mg-b-5</button>
       <button class="mg-b-5 bg-lime-3">mg-b-5</button>
       <button class="mg-b-5 bg-teal-4">mg-b-5</button>
     </div>
     <h1>grid布局测试</h1>
-    <div class="grid grid-cols-13">
-      <p class="bg-yellow-4">grid-cols-13</p>
-      <p class="bg-purple-9">grid-cols-13</p>
-      <p class="bg-yellow-4">grid-cols-13</p>
-      <p class="bg-sky-4">grid-cols-13</p>
-      <p class="bg-yellow-4">grid-cols-13</p>
-      <p class="bg-pink-4">grid-cols-13</p>
-      <p class="bg-yellow-4">grid-cols-13</p>
-      <p class="bg-sky-4">grid-cols-13</p>
-      <p class="bg-yellow-4">grid-cols-13</p>
-      <p class="bg-orange-4">grid-cols-13</p>
-      <p class="bg-yellow-4">grid-cols-13</p>
-      <p class="bg-red-4">grid-cols-13</p>
-      <p class="bg-yellow-4">grid-cols-13</p>
+    <h4>均分11列 grid-cols-11</h4>
+    <div class="grid grid-cols-11 gap-20">
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
+      <p class="bg-yellow-4">grid-cols-11</p>
     </div>
-    <div class="grid grid-cols-5 gap-20">
-      <p class="bg-rose-4">gap-20</p>
-      <p class="bg-rose-4">gap-20</p>
-      <p class="bg-rose-4">gap-20</p>
-      <p class="bg-rose-4">gap-20</p>
-      <p class="bg-rose-4">gap-20</p>
+    <h4>2列百分比,grid-15p</h4>
+    <div class="grid grid-15p gap-20">
+      <p class="bg-rose-4">grid-15p</p>
+      <p class="bg-rose-4">grid-15p 2列时,用百分比单位,只写一列,另一列自动补齐</p>
     </div>
-    <h1>动态生成规则测试</h1>
-    <h3>margin和padding</h3>
-    <span class="inline-block pd-12 mg-22">pd-12 mg-22</span>
-    <h3>文字大小/颜色/文本对齐/加粗</h3>
+    <h4>2列,左200px固定,右auto, grid-200px_auto</h4>
+    <div class="grid grid-200px_auto gap-20">
+      <p class="bg-rose-4">grid-200px_auto</p>
+      <p class="bg-rose-4">grid-200px_auto</p>
+    </div>
+    <h4>3列混合单位,grid-100px_25vw_300px</h4>
+    <div class="grid grid-100px_25vw_300px gap-20">
+      <p class="bg-rose-4">grid-100px_25vw_300px</p>
+      <p class="bg-rose-4">grid-100px_25vw_300px</p>
+      <p class="bg-rose-4">grid-100px_25vw_300px</p>
+    </div>
+    <h1>margin和padding</h1>
+    <span class="inline-block pd-12 mg-22 bd-solid bd-3 bd-rose-5">pd-12 mg-22</span>
+    <h1>文字大小/颜色/文本对齐/加粗</h1>
     <p class="txt-sm">txt-sm</p>
     <p class="txt-md txt-red-5">txt-md  txt-red-5</p>
-    <p class="txt-base txt-center">txt-base txt-center</p>
-    <p class="txt-lg txt-right">txt-lg txt-right</p>
+    <p class="txt-base txt-center">txt-base txt-center 居中</p>
+    <p class="txt-lg txt-right">txt-lg txt-right 居右</p>
     <p class="txt-xl txt-b-6">txt-xl txt-b-6加粗weight:600</p>
     <p class="txt-2xl txt-pink-6">txt-2xl txt-pink-6</p>
     <p class="txt-3xl">txt-3xl</p>
-    <p class="txt-40px">txt-40px自定义大小</p>
-    <p class="txt-4rem">txt-40px自定义大小REM</p>
-    <h3>背景色/边框</h3>
+    <p class="txt-40px">txt-40px 自定义大小</p>
+    <p class="txt-4rem">txt-40px 自定义大小REM</p>
+    <h1>背景色/边框</h1>
     <span class="inline-block bg-blue-3">bg-blue-3</span>
     <span class="inline-block bd-solid bd-3">bd-solid bd-3</span>
     <span class="inline-block bd-solid bd-3 bd-rose-5">bd-solid bd-3 bd-rose-5</span>
     <span class="inline-block bg-yellow-4 cir-tl-10">cir-tl-10左上圆角10px</span>
     <span class="inline-block bg-sky-4 cir-br-10">cir-bl-10右下圆角10px</span>
-    <h3>宽度/高度</h3>
+    <h1>宽度/高度</h1>
     <span class="inline-block bg-blue-3 w-200">w-200 width:200px</span>
     <span class="inline-block bg-red-3 h-100">h-100 height:100px</span>
+    <span class="inline-block bg-blue-3 max-w-200">max-w-200 max-width:200px</span>
     <span class="inline-block bg-rose-4 w-20vw h-20vh">w-20vw,h-20vh width:20vw;height:20vh</span>
     <span class="inline-block bg-rose-4 w-20p">w-20p width:20%</span>
-    <h3>块级元素左右居中</h3>
-    <div class="mg-lr-auto w-200 bd-solid bd-rose-5 bg-blue-3">mg-auto</div>
+    <span class="inline-block w-auto">w-atuo width:auto</span>
+    <span class="inline-block w-auto">h-auto height:auto</span>
+    <h1>块级元素左右居中</h1>
+    <div class="mg-lr-auto w-200 bd-solid bd-rose-5 bg-blue-3">mg-lr-auto</div>
     <br />
     <hr />
     <br />
-    <br />
+    <br />-->
   </div>
 </body>
 </html>

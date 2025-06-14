@@ -39,6 +39,12 @@
     <None Update="dataDefault\simpleRules.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="usedCssCfg\blogArticle_ignoreClass.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfg\blogArticle_explicitlyClass.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="usedCssCfg\mirrorui_explicitlyClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

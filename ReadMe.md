@@ -42,12 +42,12 @@ new UsedCss().Run("index.html", "output.css");
 5. 输出css文件
 
 ## 默认数据
-##### 在dataDefault目录下
+#### 在dataDefault目录下
 1. simpleRules.ini 常用css简单规则,一般只包含一个规则的原子风格.
 2. styleSimpleName.ini 类简化名字和样式规则对应关系
 3. styleValues.ini 预定义样式值
 
-##### ini文件格式
+#### ini文件格式
 
 1. 用等号分割键和值 "k=v" ,可用 "// 注释",键/值前后不要空格.每个键值对或者注释占一行.行尾不能有分号.
 2. 值部分是css规则,一般一条,多条用;(分号)隔开,最后面的规则不能有分号.
@@ -69,8 +69,38 @@ new UsedCss().Run("index.html", "output.css");
 ```
 
 ## 特点
-##### 简化类名组成规则
-##### 复杂匹配
+#### 简化类名组成规则
+```
+[媒体查询-]pre[-规则名字][-规则值名字]-val
+```
+其中pre为前缀,val为值.
+```csharp
+// 例子:
+mg-20
+// mg是前缀,表示规则名字margin. 20是值,表示20px. 转换规则是 margin:20px
+
+mg-l-20
+// l是规则名字,表示 margin-left. 结果 margin-left:20px
+
+bg-red-5
+// bg表示background规则,red表示颜色规则,5是颜色深度等级.
+// 结果: background-color:#b91c1c
+```
+支持媒体查询前缀,有4个 sm md lg xl
+```css
+/*sm是明天查询前缀,bg-red-5是规则和值,写在媒体查询定义内*/ 
+
+sm-bg-teal-5
+
+/*结果*/
+@media (max-width: 639.9px) {
+  .sm-bg-teal-5 {
+    background-color: #14b8a6;
+  }
+}
+```
+
+#### 复杂匹配
 &emsp;没有实现这个,太复杂了.浏览器在解析html和css时,能将class和css里与之有关联的规则匹配到,然后渲染样式.根据类名到样式表中取出使用到的规则,也需要实现浏览器的这种功能.
 
 &emsp;要分析出css文件里,那些规则对html起了作用,需要解决的问题至少有:简单的比如.btn,复杂的就多了,.btn.active.伪类,.btn:after,子元素.btn > span.还有媒体查询,css动画等.这比较复杂了,全部实现好难啊.

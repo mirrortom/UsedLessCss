@@ -3,6 +3,7 @@ using AngleSharp.Css.Dom;
 using AngleSharp.Css.Parser;
 using AngleSharp.Html.Parser;
 using AngleSharp.Text;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -38,7 +39,7 @@ internal class UsedCss
     /// </summary>
     private static Dictionary<string, Func<string, string>> rulesProcMethod = new()
     {
-        // 用于grid布局,平均分配列宽
+        // grid布局,值为列数,平均分配列宽
         ["grid-cols"] = (val) =>
         {
             if ((int.TryParse(val, out int _)))
@@ -47,57 +48,15 @@ internal class UsedCss
             }
             return string.Empty;
         },
-        // 用于grid布局,百分比分配列宽 grid-[num]p[num]p
-        // 例如: "grid-10p"=>grid-template-columns:10% 90%
-        // "grid-10p30p60p"=>grid-template-columns:10% 30% 60%
+        // grid布局,值为每列列宽大小,支持像素/百分比/vw,格式 grid-[num](p|px|vw)[num](p|px|vw)
         ["grid"] = (val) =>
         {
-            if (!val.EndsWith('p'))
-                return string.Empty;
-            string[] percents = val[..^1].Split('p');
-            int[] vals = new int[percents.Length];
-            for (int i = 0; i < vals.Length; i++)
-            {
-                if (!int.TryParse(percents[i], out vals[i]))
-                    return string.Empty;
-            }
-            // 如果值的和已经超过100,直接返回,否则加上最后列.
-            int max100 = 0;
-            StringBuilder reVal = new();
-            foreach (var item in vals)
-            {
-                max100 += item;
-                reVal.Append($"{item}% ");
-            }
-            if (max100 >= 100)
-                return reVal.ToString();
-            return reVal.Append($"{100 - max100}%").ToString();
+            return Helps.ToGridTemplateColsValue(val);
         },
-        // 通用规则 键名特别取值,不使用class类名.class名字不能数字开头,不能含有%,#等特殊符号
+        // 通用规则 规则key为0,避免和class类名冲突.
         ["0"] = (val) =>
         {
-            if ((int.TryParse(val, out int _)))
-            {
-                // 纯数值默认是像素单位
-                return $"{val}px";
-            }
-            string[] unit = ["rem", "em", "vw", "vh", "px"];
-            foreach (var item in unit)
-            {
-                // 自带了css单位,并且数值有效,直接使用
-                if (val.EndsWith(item, StringComparison.OrdinalIgnoreCase)
-                && int.TryParse(val.Replace(item, ""), out int _val))
-                {
-                    return val;
-                }
-            }
-            // p结尾是百分比单位,单独处理
-            if (val.EndsWith("p", StringComparison.OrdinalIgnoreCase)
-                && int.TryParse(val[..^1], out int _valp))
-            {
-                return _valp + "%";
-            }
-            return string.Empty;
+            return Helps.ToCssRuleValue(val);
         }
     };
 
@@ -106,6 +65,12 @@ internal class UsedCss
     /// 使用这个特点的集合可以去掉重复的选择器和重复的规则
     /// </summary>
     private Dictionary<string, HashSet<string>> buffer;
+
+    /// <summary>
+    /// 匹配成功的css样式缓存器,但是属于媒体查询的,样式类名前缀是sm-,md-,lg-,xl-
+    /// 媒体查询样式单独处理,要放在其它样式的后面
+    /// </summary>
+    private Dictionary<string, HashSet<string>> bufferMediaquery;
 
     /// <summary>
     /// 一次处理时,忽略样式名字列表
@@ -151,7 +116,8 @@ internal class UsedCss
     }
 
     /// <summary>
-    /// htmlContent:html文件内容
+    /// htmlContent:html文件内容.
+    /// 多个css文件合并时要注意顺序,生成的工具样式要放到最后,由于选择器只有1个类选择器,优先级容易被其它组合class超过.
     /// </summary>
     /// <param name="paths"></param>
     /// <returns></returns>
@@ -169,7 +135,7 @@ internal class UsedCss
         GenerateCss(classSet);
 
         // 4.合并相同样式
-        SameRulesCombine();
+        CombineEqualRules();
 
         // 5. 输出CSS文件
         var outCss = ToCssTxt();
@@ -262,6 +228,7 @@ internal class UsedCss
     void GenerateCss(HashSet<string> classes)
     {
         buffer = new(StringComparer.OrdinalIgnoreCase);
+        bufferMediaquery = new(StringComparer.OrdinalIgnoreCase);
 #if DEBUG
         Console.WriteLine($"总共{classes.Count}个样式需要匹配");
 
@@ -269,7 +236,7 @@ internal class UsedCss
         int successCount = 0;
         int codeIndex = 1;
 #endif
-        foreach (var clsName in classes.OrderBy(c => c))
+        foreach (var clsName in classes)
         {
 #if DEBUG
             Console.WriteLine($"开始匹配: {clsName}");
@@ -385,7 +352,7 @@ internal class UsedCss
     {
         if (simpleRules.TryGetValue(clsName, out var match))
         {
-            AddBuffer(clsName, match, this.buffer);
+            AddBuffer(clsName, match);
 #if DEBUG
             Console.WriteLine($"简单预定义匹配成功 {clsName}");
             logBuf.AppendLine($"简单预定义匹配-成功^_^!");
@@ -397,25 +364,28 @@ internal class UsedCss
 
     /// <summary>
     /// 动态生成css规则,规则名字和值生成成功时,返回ture,规则加入输出缓存.
-    /// 通用规则:pre[-x][-y]-val,第一个为前缀,最后一个为值
-    /// 生成逻辑:根据样式类简化名查找规则名字,根据值查询或者生成样式值.
-    /// 例如:"bg-red-7","bg-red"转为为规则名:"background-color","red-7"转为规则值:"#b91c1c"
+    /// 生成逻辑:样式类简化名字,包含了规则名字和规则值信息,分析后生成css规则.
+    /// 简化类名约定格式: [媒体查询-]pre[-规则名字][-规则值名字]-val pre为前缀,val为值
+    /// 例1: "bd-red-7","bd-red"转为为规则名:"border-color","red-7"转为规则值:"#b91c1c"
+    /// 例2: "pd-20","pd"转规则名:"padding","20"转为值:"20px"
     /// </summary>
     /// <param name="clsName"></param>
     /// <returns></returns>
     bool DynamicRuleValueMatch(string clsName)
     {
+        // 1.分析规则名字
         var clsArr = clsName.Split('-');
-
-        // 分析规则名字
+        // 分析规则名字.例: mg-20, grid-cols-3, sm-grid-cols-3(媒体查询版本)
         if (clsArr.Length < 2)
             return false;
-        // 到字典找出对应类全名. match示例: mg => margin:$v
-        string preName = string.Join('-', clsArr[..^1]);
-        if (!styleNamesSimple.TryGetValue(preName, out var match))
+        // 规则名字前缀key不含媒体查询前缀部分(第1个)如果有,不含值部分(最后1个)
+        int startIndex = Helps.GetMediaPre(clsName) == string.Empty ? 0 : 1;
+        string preKey = string.Join('-', clsArr[startIndex..^1]);
+        // 到字典找出对应类全名. 示例: mg => margin:$v. 
+        if (!styleNamesSimple.TryGetValue(preKey, out var match))
             return false;
 
-        // 分析规则值
+        // 2.分析规则值
         string ruleTypeName = clsArr[^2];
         string ruleValue = clsArr[^1];
         string targetVal = string.Empty;
@@ -425,33 +395,32 @@ internal class UsedCss
         {
             targetVal = matchValue;
         }
+        // 非预定义值时
+        else if (rulesProcMethod.TryGetValue(preKey, out var method))
+        {
+            // 特定的规则处理
+            targetVal = method(ruleValue);
+        }
         else
         {
-            // 非预定义值时
-            if (rulesProcMethod.TryGetValue(preName, out var method))
-            {
-                // 特定的规则处理
-                targetVal = method(ruleValue);
-            }
-            else
-            {
-                // 一般性规则处理
-                targetVal = rulesProcMethod["0"](ruleValue);
-            }
+            // 一般性规则处理
+            targetVal = rulesProcMethod["0"](ruleValue);
         }
+
         // 值不符合要求
         if (targetVal == string.Empty)
             return false;
 
         // 替换为实际值,加入到输出缓存 match示例: margin:$v或者margin-left:$v;margin-right:$v
         string rules = match.Replace("$v", targetVal);
-        AddBuffer(clsName, rules, this.buffer);
+        AddBuffer(clsName, rules);
 #if DEBUG
-        Console.WriteLine($"简单动态匹配成功 {clsName}");
-        logBuf.AppendLine($"简单动态匹配-成功^_^!");
+        Console.WriteLine($"简单动态值匹配成功 {clsName}");
+        logBuf.AppendLine($"简单动态值匹配-成功^_^!");
 #endif
         return true;
     }
+
     #endregion
 
 
@@ -462,9 +431,14 @@ internal class UsedCss
     /// </summary>
     /// <param name="name"></param>
     /// <param name="val"></param>
-    /// <param name="buf"></param>
-    void AddBuffer(string name, string val, Dictionary<string, HashSet<string>> buf)
+    void AddBuffer(string name, string val)
     {
+        var buf = buffer;
+        // 如果是媒体查询样式,加入到对应buffer
+        if (Helps.GetMediaPre(name) != string.Empty)
+        {
+            buf = bufferMediaquery;
+        }
         // 相同的class名字,合并成一个样式
         if (!buf.TryGetValue(name, out var _))
         {
@@ -491,17 +465,40 @@ internal class UsedCss
     /// <exception cref="NotImplementedException"></exception>
     private string ToCssTxt()
     {
-        StringBuilder sb = new();
-        sb.AppendLine("/*-----usedCss--split--line-----*/");
+        StringBuilder strBuf = new();
+        strBuf.AppendLine("/*-----usedCss--split--line-----*/");
         // 加入普通样式集
         foreach (var k in buffer.Keys)
         {
-            FomartToTxtBuf(sb, k, buffer[k]);
+            FomartToTxtBuf(strBuf, k, buffer[k]);
+        }
+        // 加入媒体样式集 
+        // 先根据几种媒体类型分组,再按组添加.
+        Dictionary<string, string[]> mqGroupKeys = [];
+        // mqType: sm- md- lg- xl-
+        foreach (var mqType in Helps.MediaPre)
+        {
+            mqGroupKeys.Add(mqType, bufferMediaquery.Keys.Where(o => Helps.GetMediaPre(o) == mqType[..^1]).ToArray());
+        }
+        foreach (var gKeys in mqGroupKeys)
+        {
+            // 如果这个媒体类型下有规则,才加入
+            if (gKeys.Value != null && gKeys.Value.Length > 0)
+            {
+                // 媒体查询尺寸分界点定义语句@media xxx
+                strBuf.Append(Helps.GetMediaQueryDefine(gKeys.Key));
+                strBuf.AppendLine(" {");
+                foreach (var k in gKeys.Value)
+                {
+                    FomartToTxtBuf(strBuf, k, bufferMediaquery[k], 4);
+                }
+                strBuf.AppendLine("}");
+            }
         }
 #if DEBUG
-        sb.AppendLine($"/*-----usedCss-----Create time: {DateTime.Now.ToString()}-----*/");
+        strBuf.AppendLine($"/*-----usedCss-----Create time: {DateTime.Now.ToString()}-----*/");
 #endif
-        return sb.ToString().TrimEnd();
+        return strBuf.ToString().TrimEnd();
     }
 
     /// <summary>
@@ -513,7 +510,7 @@ internal class UsedCss
     /// <param name="indentCount"></param>
     private void FomartToTxtBuf(StringBuilder outBuf, string clsName, HashSet<string> rules, int indentCount = 2)
     {
-        // 类名.(如果是写在媒体查询下的样式,需要缩进)
+        // 类名.(如果是写在媒体查询下的样式,需要增加缩进,indentCount=4)
         string n = $".{clsName}";
         if (clsName.Contains(','))
         {
@@ -540,63 +537,26 @@ internal class UsedCss
     /// <summary>
     /// 合并相同规则的样式.例如.a{color:red},.b{color:red}合并.a,.b{color:red}
     /// </summary>
-    private void SameRulesCombine()
+    private void CombineEqualRules()
     {
         // 遍历缓存,查询含有完全相同规则的样式,合并成一个样式
-
         // 普通样式集 duplicates:相同的
-        var dupGroupList = FindSameValueItems(this.buffer);
-        if (dupGroupList.Count > 0)
+        combine(this.buffer);
+        combine(this.bufferMediaquery);
+        void combine(Dictionary<string, HashSet<string>> buf)
         {
-            // 遍历重复键集合
-            foreach (var dupKeys in dupGroupList)
+            var dupGroupList = Helps.FindSameValueItems(buf);
+            if (dupGroupList.Count > 0)
             {
-                RemoveDupAndAddNew(dupKeys, this.buffer);
+                // 遍历重复键集合
+                foreach (var dupKeys in dupGroupList)
+                {
+                    Helps.CombineKeyRemoveEqualValue(dupKeys, buf);
+                }
             }
-        }
-
-        // dupKeys:在src中具有相同值的键的列表.src:源字典
-        // 该方法将src中所有相同值的元素为合并为一个,值不变,键是相同值的键的,以逗号合并的字符串
-        void RemoveDupAndAddNew(List<string> dupKeys, Dictionary<string, HashSet<string>> src)
-        {
-            // 保留一份要删除的相同值元素
-            var v = src[dupKeys[0]];
-            // 从缓存这,删除这一组的相同值元素.
-            foreach (var dk in dupKeys)
-            {
-                src.Remove(dk);
-            }
-            // 然后加入一个新元素,以相同值元素的值为值,键是逗号合并的所有相同元素的键
-            src.Add(string.Join(',', dupKeys), v);
         }
     }
 
-    /// <summary>
-    /// 返回一个列表集合,元素是,源字典中,有相同值的键的列表
-    /// </summary>
-    /// <param name="src"></param>
-    /// <returns></returns>
-    private List<List<string>> FindSameValueItems(Dictionary<string, HashSet<string>> src)
-    {
-        // 使用反向字典,原理是,以值为键,如果值相同,那么加入字典时就会发现已经存在,从而找到重复值
-        var valueToKeys = new Dictionary<HashSet<string>, List<string>>(HashSet<string>.CreateSetComparer());
-        foreach (var k in src)
-        {
-            if (!valueToKeys.TryGetValue(k.Value, out var keys))
-            {
-                keys = [];
-                valueToKeys[k.Value] = keys;
-            }
-            keys.Add(k.Key);
-        }
-        var duplicates = new List<List<string>>();
-        foreach (var d in valueToKeys)
-        {
-            if (d.Value.Count > 1)
-                duplicates.Add(d.Value);
-        }
-        return duplicates;
-    }
     #endregion
 
     #region Unit Test
