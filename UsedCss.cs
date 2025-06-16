@@ -258,9 +258,16 @@ internal class UsedCss
                 Console.ForegroundColor = ConsoleColor.White;
                 // 匹配失败时,日志记录对应文件
                 logBuf.Append($"匹配失败:( 受影响文件:");
-                foreach (var fIndex in classFileIdMap[clsName])
+                if (classFileIdMap.TryGetValue(clsName, out var fArr))
                 {
-                    logBuf.Append($"[{Path.GetFileName(inputFiles[fIndex])}], ");
+                    foreach (var fIndex in fArr)
+                    {
+                        logBuf.Append($"[{Path.GetFileName(inputFiles[fIndex])}], ");
+                    }
+                }
+                else
+                {
+                    logBuf.Append("[无.该样式类来自明确加入.]");
                 }
                 logBuf.AppendLine($"-----ERROR");
             }
@@ -326,7 +333,13 @@ internal class UsedCss
     public void IgnoreClassLoad(params string[] clsNames)
     {
         if (this.ignoreClassList != null) return;
-        this.ignoreClassList = [.. clsNames];
+        this.ignoreClassList = [];
+        foreach (var item in clsNames)
+        {
+            if (string.IsNullOrWhiteSpace(item))
+                continue;
+            this.ignoreClassList.Add(item);
+        }
     }
 
     /// <summary>
@@ -336,7 +349,13 @@ internal class UsedCss
     public void ExplicitlyClassListLoad(params string[] clsNames)
     {
         if (this.explicitlyClassList != null) return;
-        this.explicitlyClassList = [.. clsNames];
+        this.explicitlyClassList = [];
+        foreach (var item in clsNames)
+        {
+            if (string.IsNullOrWhiteSpace(item))
+                continue;
+            this.explicitlyClassList.Add(item);
+        }
     }
     #endregion
 
@@ -439,10 +458,13 @@ internal class UsedCss
         {
             buf = bufferMediaquery;
         }
+        string clsN = name.StartsWith("hover-", StringComparison.OrdinalIgnoreCase) ?
+        $"{name}:hover" : name;
+
         // 相同的class名字,合并成一个样式
         if (!buf.TryGetValue(name, out var _))
         {
-            buf[name] = [];
+            buf[clsN] = [];
         }
         // hashset集合,避免加入相同规则
         var items = val.Split(';');
@@ -451,7 +473,7 @@ internal class UsedCss
             // 拆解规则键值对,去掉空客,统一格式.避免相同规则重复加入.
             // 例如"left:0"和"left: 0"或" left:0"
             var r = c.Split(":");
-            buf[name].Add($"{r[0].Trim()}:{r[1].Trim()}");
+            buf[clsN].Add($"{r[0].Trim()}:{r[1].Trim()}");
         }
     }
     #endregion
@@ -541,33 +563,25 @@ internal class UsedCss
     {
         // 遍历缓存,查询含有完全相同规则的样式,合并成一个样式
         // 普通样式集 duplicates:相同的
-        combine(this.buffer);
-        combine(this.bufferMediaquery);
-        void combine(Dictionary<string, HashSet<string>> buf)
+        var dupGroupList = Helps.FindSameValueItems(this.buffer);
+        if (dupGroupList.Count > 0)
         {
-            var dupGroupList = Helps.FindSameValueItems(buf);
-            if (dupGroupList.Count > 0)
+            // 遍历重复键集合
+            foreach (var dupKeys in dupGroupList)
             {
-                // 遍历重复键集合
-                foreach (var dupKeys in dupGroupList)
-                {
-                    Helps.CombineKeyRemoveEqualValue(dupKeys, buf);
-                }
+                Helps.CombineKeyRemoveEqualValue(dupKeys, this.buffer);
             }
         }
+        // 媒体查询样式合并,例如:.sm-block{display:block}和md-block{display:none}
+        // 规则一样,但属于不同的媒体查询分段,不能合成为sm-block,md-block{display:none}
+        // 必须规则一样而且前缀也一样才能合并:sm-a-red{color:red},sm-b-red:{color:red}
+
+        // 实际情况是,规则一样,但取不同类名,大多情况下都是多余的做法.所以,这个方法很少有用.
     }
 
     #endregion
 
     #region Unit Test
-    /// <summary>
-    /// 返回一个规则值的处理方法,测试规则值是否生成正确
-    /// </summary>
-    /// <param name="clsName"></param>
-    /// <returns></returns>
-    public static Func<string, string> UT_GetRulesProcMethod(string clsName)
-    {
-        return rulesProcMethod[clsName];
-    }
+    
     #endregion
 }

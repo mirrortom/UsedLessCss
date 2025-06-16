@@ -155,6 +155,9 @@ internal class Helps
     {
         byte[] contentBytes = UnionFiles(bytes);
         File.WriteAllBytes(path, contentBytes);
+#if DEBUG
+        Console.WriteLine($"file output of path [{path}]");
+#endif
     }
 
     /// <summary>

@@ -1,14 +1,21 @@
-﻿using System.IO;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UsedLessCss;
-// 基本测试
-Test();
-//TestFileWatch();
-//ForMirrorUiDoc(); 
-//ForMirrorIconDoc();
-//ForBlogArticle();
 
-//var m=UsedCss.UT_GetRulesProcMethod("0");
+// 基本测试
+//Test();
+//TestFileWatch();
+
+// 为项目生成样式
+var cfg = new
+{
+    uidoc = "_mirrorUiCfg",
+    icondoc = "_mirrorIconCfg",
+    blog = "_blogCfg"
+};
+ForProject($"usedCssCfgForProject/{cfg.blog}.json");
 
 static void Test()
 {
@@ -50,77 +57,75 @@ static void TestFileWatch()
     while (Console.Read() != 'q') ;
 }
 
-// 为mirrorui项目文档生成样式
-static void ForMirrorUiDoc()
+// 为项目生成样式.每个项目有配置文件,传入对应配置.
+static void ForProject(string cfgPath)
 {
-    // 1.静态样式文件选取
-    byte[] globle = StylesGlobal.GetBytesCss();
-    byte[] uiAll = StylesMirrorUI.GetBytesCss(Uicoms.all);
+    // 1.配置读取
+    dynamic cfg = JsonConvert.DeserializeObject(File.ReadAllText(cfgPath));
+    if (cfg == null) return;
     // 2.html文件
-    string[] filePaths = Directory.GetFiles("D:\\Mirror\\Project_git\\webcoms\\mirrorui\\doc\\");
-    List<string> files = new();
-    files.Add("D:\\Mirror\\Project_git\\webcoms\\mirrorui\\index.html");
-    files.AddRange(filePaths);
-    // 3.忽略类/明确添加类 列表
-    string ignoreClass = File.ReadAllText("usedCssCfg/mirrorui_ignoreClass.txt");
-    string explicitlyClass = File.ReadAllText("usedCssCfg/mirrorui_explicitlyClass.txt");
-    // 4.生成
+    List<string> files = [];
+    foreach (var file in cfg.htmlFiles)
+    {
+        if (file.path != null)
+        {
+            files.Add((string)file.path);
+        }
+        else if (file.dir != null)
+        {
+            if (file.fileNames != null)
+            {
+                foreach (string fName in file.fileNames)
+                {
+                    files.Add(Path.Combine((string)file.dir, fName));
+                }
+                continue;
+            }
+            files.AddRange(Directory.GetFiles((string)file.dir));
+        }
+    }
+    // 3.静态样式选择
+    List<byte[]> cssFileBuf = [];
+    foreach (var style in cfg.styles)
+    {
+        if (style.path != null)
+        {
+            cssFileBuf.Add(File.ReadAllBytes((string)style.path));
+        }
+        else if (style.dir != null)
+        {
+            if (style.fileNames != null)
+            {
+                foreach (string fName in style.fileNames)
+                {
+                    string path = Path.Combine((string)style.dir, fName);
+                    cssFileBuf.Add(File.ReadAllBytes(path));
+                }
+                continue;
+            }
+            foreach (var cssfile in Directory.GetFiles((string)style.dir))
+            {
+                cssFileBuf.Add(File.ReadAllBytes(cssfile));
+            }
+        }
+    }
+    // 4.处理
     var uc = new UsedCss();
-    uc.IgnoreClassLoad(ignoreClass.Split(Environment.NewLine));
-    uc.ExplicitlyClassListLoad(explicitlyClass.Split(Environment.NewLine));
+    // 4.1忽略的 样式类列表
+    if (cfg.ignoreClass != null)
+    {
+        var ignoreClass = File.ReadAllText((string)cfg.ignoreClass);
+        uc.IgnoreClassLoad(ignoreClass.Split(Environment.NewLine));
+    }
+    // 4.2明确加入的
+    if (cfg.explicitlyClass != null)
+    {
+        var explicitlyClass = File.ReadAllText((string)cfg.explicitlyClass);
+        uc.ExplicitlyClassListLoad(explicitlyClass.Split(Environment.NewLine));
+    }
     string css = uc.Run([.. files]);
-    // 5.合并多个样式文件
-    string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\uidoc.css";
-    Helps.UnionFiles(outPath, globle, uiAll, Encoding.UTF8.GetBytes(css));
-}
-
-// 为webicon文档生成样式
-static void ForMirrorIconDoc()
-{
-    // 1.静态样式文件选取
-    byte[] globle = StylesGlobal.GetBytesCss();
-    byte[] mirrorui = StylesMirrorUI.GetBytesCss(Uicoms.btn, Uicoms.cachepage);
-    byte[] iconcss = StylesMirrorIcon.GetBytesCss();
-    // 2.html文件
-    string[] filePaths = Directory.GetFiles("D:\\Mirror\\Project_git\\webicons\\mirroricon\\doc\\");
-    List<string> files = new();
-    files.Add("D:\\Mirror\\Project_git\\webicons\\mirroricon\\index.html");
-    files.AddRange(filePaths);
-    // 3.忽略类/明确添加类 列表
-    string ignoreClass = File.ReadAllText("usedCssCfg/mirrorIcon_ignoreClass.txt");
-    //string explicitlyClass = File.ReadAllText("usedCssCfg/mirrorui_explicitlyClass.txt");
-    // 4.生成
-    var uc = new UsedCss();
-    uc.IgnoreClassLoad(ignoreClass.Split(Environment.NewLine));
-    //uc.ExplicitlyClassListLoad(explicitlyClass.Split(Environment.NewLine));
-    string css = uc.Run([.. files]);
-    // 5.合并多个样式文件
-    string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\icondoc.css";
-    Helps.UnionFiles(outPath, globle, mirrorui, iconcss, Encoding.UTF8.GetBytes(css));
-}
-
-// 为博客文章生成样式
-static void ForBlogArticle()
-{
-    // 1.静态样式文件选取
-    byte[] globle = StylesGlobal.GetBytesCss();
-    byte[] mirrorui = StylesMirrorUI.GetBytesCss(Uicoms.allNoTheme);
-    byte[] iconcss = StylesMirrorIcon.GetBytesCss();
-    byte[] blogcss = File.ReadAllBytes("D:\\Mirror\\Project_git\\MirrorBlog\\src\\asset\\css\\blog.css");
-    // 2.html文件
-    //string[] filePaths = Directory.GetFiles("D:\\Mirror\\Project_git\\webicons\\mirroricon\\doc\\");
-    List<string> files = new();
-    files.Add("D:\\Mirror\\Project_git\\MirrorBlog\\src\\doc\\jsapi.html");
-    //files.AddRange(filePaths);
-    // 3.忽略类/明确添加类 列表
-    //string ignoreClass = File.ReadAllText("usedCssCfg/mirrorIcon_ignoreClass.txt");
-    string explicitlyClass = File.ReadAllText("usedCssCfg/blogArticle_explicitlyClass.txt");
-    // 4.生成
-    var uc = new UsedCss();
-    //uc.IgnoreClassLoad(ignoreClass.Split(Environment.NewLine));
-    uc.ExplicitlyClassListLoad(explicitlyClass.Split(Environment.NewLine));
-    string css = uc.Run([.. files]);
-    // 5.合并多个样式文件
-    string outPath = "D:\\Mirror\\Project_git\\UsedLessCss\\outcss\\blogArticle.css";
-    Helps.UnionFiles(outPath, globle, mirrorui, iconcss, blogcss, Encoding.UTF8.GetBytes(css));
+    cssFileBuf.Add(Encoding.UTF8.GetBytes(css));
+    // 5.合并输出
+    string outPath = cfg.OutputCss;
+    Helps.UnionFiles(outPath, [.. cssFileBuf]);
 }

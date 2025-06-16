@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.3.0" />
     <PackageReference Include="AngleSharp.Css" Version="0.17.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,22 +40,34 @@
     <None Update="dataDefault\simpleRules.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="usedCssCfg\blogArticle_ignoreClass.txt">
+    <None Update="usedCssCfgForProject\blogArticle_ignoreClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="usedCssCfg\blogArticle_explicitlyClass.txt">
+    <None Update="usedCssCfgForProject\blogArticle_explicitlyClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="usedCssCfg\mirrorui_explicitlyClass.txt">
+    <None Update="usedCssCfgForProject\mirrorui_explicitlyClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="usedCssCfg\mirrorIcon_ignoreClass.txt">
+    <None Update="usedCssCfgForProject\mirrorIcon_ignoreClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="usedCssCfg\mirrorui_ignoreClass.txt">
+    <None Update="usedCssCfgForProject\mirrorui_cssCfg.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\mirrorui_ignoreClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="test\index.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\_blogCfg.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\_mirrorIconCfg.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\_mirrorUiCfg.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
