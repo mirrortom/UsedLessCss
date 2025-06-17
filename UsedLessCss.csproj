@@ -40,6 +40,15 @@
     <None Update="dataDefault\simpleRules.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="outcss\globalBase.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\docIndex_explicitlyClass.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\blogBase_explicitlyClass.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="usedCssCfgForProject\blogArticle_ignoreClass.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -61,7 +70,13 @@
     <None Update="test\index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="usedCssCfgForProject\_blogCfg.json">
+    <None Update="usedCssCfgForProject\_docIndexCfg.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\_blogBaseCfg.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="usedCssCfgForProject\_blogArticleCfg.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="usedCssCfgForProject\_mirrorIconCfg.json">

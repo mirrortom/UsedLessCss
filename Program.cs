@@ -13,9 +13,11 @@ var cfg = new
 {
     uidoc = "_mirrorUiCfg",
     icondoc = "_mirrorIconCfg",
-    blog = "_blogCfg"
+    blog = "_blogArticleCfg",
+    blogBase = "_blogBaseCfg",
+    docIndex = "_docIndexCfg"
 };
-ForProject($"usedCssCfgForProject/{cfg.blog}.json");
+ForProject($"usedCssCfgForProject/{cfg.docIndex}.json");
 
 static void Test()
 {
