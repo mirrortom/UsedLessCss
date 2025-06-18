@@ -1,0 +1,46 @@
+﻿/*===用于文档集合index.html首页样式 PC端*/
+/*最外层DIV*/
+.container {
+  display: grid;
+  grid-template-columns: 220px 700px 200px;
+  column-gap: 35px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+/*左侧主菜单*/
+.mainmenubox {
+  top: 0;
+  max-height: 96vh;
+}
+
+/*右侧页面内导航*/
+.nav-page-inside {
+  top: 100px;
+  max-height: 80vh;
+  border: 1px solid var(--border-color);
+}
+
+.mainmenubox, .nav-page-inside {
+  position: sticky;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/*h1~h6用于标题,设置margin值参考了MD语言的标题上下空白值*/
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+}
+/*段落*/
+p {
+  text-indent: 2em;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+/*代码*/
+pre {
+  overflow-x: auto;
+  padding: 20px;
+  font-size: 1rem;
+  max-width: 100%;
+  background-color: #e5e7eb;
+}

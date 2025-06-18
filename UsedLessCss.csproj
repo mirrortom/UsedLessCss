@@ -28,16 +28,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="dataDefault\globalBase.css">
+    <None Update="styleTemplate\docIndexPC.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="dataDefault\styleSimpleName.ini">
+    <None Update="styleTemplate\globalBase.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="dataDefault\styleValues.ini">
+    <None Update="classRuleMap\styleSimpleName.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="dataDefault\simpleRules.ini">
+    <None Update="classRuleMap\styleValues.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="classRuleMap\simpleRules.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="outcss\globalBase.css">

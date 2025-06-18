@@ -108,11 +108,11 @@ internal class UsedCss
     public UsedCss()
     {
         // 初始化规则集 使用静态成员,避免多次初始化
-        simpleRules ??= RulesSimpleLoad("dataDefault/simpleRules.ini");
+        simpleRules ??= RulesSimpleLoad("classRuleMap/simpleRules.ini");
         // 载入简化类名和实际类名字典
-        styleNamesSimple ??= RulesSimpleLoad("dataDefault/styleSimpleName.ini");
+        styleNamesSimple ??= RulesSimpleLoad("classRuleMap/styleSimpleName.ini");
         // 载入css预定义值
-        styleValues ??= RulesSimpleLoad("dataDefault/styleValues.ini");
+        styleValues ??= RulesSimpleLoad("classRuleMap/styleValues.ini");
     }
 
     /// <summary>
